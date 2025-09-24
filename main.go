@@ -63,8 +63,14 @@ func main() {
 			err = services.PostToTelegram(post)
 			if err != nil {
 				logger.Error(err)
+				services.NotifyOwner(fmt.Sprintf("Could not post to telegram channel: %s", err))
 			}
-			//_ = postToTwitter(twClient, txt)
+			// err := services.PostToTwitter("test")
+			// if err != nil {
+			// 	logger.Error(err)
+			// 	services.NotifyOwner(fmt.Sprintf("Could not post to Twitter account: %s", err))
+			// }
+
 			setLastPostedURI(post.Post.Uri)
 		}
 		fmt.Println("Waiting", config.Conf.PollInterval)

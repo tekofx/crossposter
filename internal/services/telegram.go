@@ -22,6 +22,18 @@ func InitializeTelegram() {
 	}
 }
 
+func NotifyOwner(message string) error {
+	_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
+		ChatID: tu.ID(int64(config.Conf.TelegramOwner)),
+		Text:   message,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func PostToTelegram(post model.BskyPost) error {
 	if len(post.Post.Embed.Images) == 0 {
 		_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{

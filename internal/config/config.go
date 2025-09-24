@@ -89,7 +89,7 @@ func GetConfig() *Config {
 		TwitterAccessSecret:   getStringEnvVariable("TWITTER_ACCESS_SECRET"),
 
 		// Other config
-		PollInterval: 60 * time.Second,
+		PollInterval: 10 * time.Minute,
 		StateFile:    "last_bsky_post.txt",
 	}
 

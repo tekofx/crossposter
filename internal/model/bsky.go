@@ -9,7 +9,12 @@ type BskyPost struct {
 		Uri    string
 		Author BskyAuthor
 		Embed  BskyEmbed
+		Record BskyRecord `json:"record"`
 	}
+}
+
+type BskyRecord struct {
+	Text string `json:"text"`
 }
 
 type BskyAuthor struct {

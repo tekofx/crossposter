@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +11,8 @@ import (
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
 	config "github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
@@ -47,13 +49,19 @@ func setLastPostedURI(uri string) {
 	os.WriteFile(config.Conf.StateFile, []byte(uri), 0644)
 }
 
-func postToTelegram(botToken string, chatID int64, text string) error {
-	bot, err := tgbotapi.NewBotAPI(botToken)
-	if err != nil {
-		return err
+func postToTelegram(botToken string, text string) error {
+	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
+	logger.Log("Logged in Telegram as", bot.Username())
+
+	if botErr != nil {
+		logger.Fatal(botErr)
 	}
-	msg := tgbotapi.NewMessage(chatID, text)
-	_, err = bot.Send(msg)
+
+	_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
+		ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
+		Text:   text,
+	})
+
 	return err
 }
 
@@ -92,6 +100,7 @@ func main() {
 			newPosts = append(newPosts, post)
 		}
 		if len(newPosts) == 0 {
+			logger.Log("No new posts")
 			time.Sleep(config.Conf.PollInterval)
 			continue
 		}
@@ -101,7 +110,10 @@ func main() {
 		}
 		for _, post := range newPosts {
 			logger.Log("Posting post", post.Post.Uri)
-			//_ = postToTelegram(telegramBotToken, telegramChatID, txt)
+			err = postToTelegram(config.Conf.TelegramBotToken, post.Post.Record.Text)
+			if err != nil {
+				logger.Error(err)
+			}
 			//_ = postToTwitter(twClient, txt)
 			setLastPostedURI(post.Post.Uri)
 		}

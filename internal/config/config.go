@@ -13,7 +13,7 @@ import (
 type Config struct {
 	BskyHandle       string
 	TelegramBotToken string
-	TelegramChatId   string
+	TelegramChatId   int
 	PollInterval     time.Duration
 	StateFile        string
 }
@@ -64,7 +64,7 @@ func GetConfig() *Config {
 	return &Config{
 		BskyHandle:       getStringEnvVariable("BSKY_HANDLE"),
 		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
-		TelegramChatId:   getStringEnvVariable("TELEGRAM_CHAT_ID"),
+		TelegramChatId:   getIntEnvVariable("TELEGRAM_CHAT_ID"),
 		PollInterval:     60 * time.Second,
 		StateFile:        "last_bsky_post.txt",
 	}

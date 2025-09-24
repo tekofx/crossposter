@@ -20,13 +20,12 @@ func InitializeTelegram() {
 	if botErr != nil {
 		logger.Fatal(botErr)
 	}
-
 }
 
 func PostToTelegram(post model.BskyPost) error {
 	if len(post.Post.Embed.Images) == 0 {
 		_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
-			ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
+			ChatID: tu.ID(int64(config.GetConfig().TelegramChannelId)),
 			Text:   post.Post.Record.Text,
 		})
 		return err
@@ -61,7 +60,7 @@ func postImages(post model.BskyPost) error {
 	_, err := bot.SendMediaGroup(
 		context.Background(),
 		&telego.SendMediaGroupParams{
-			ChatID: tu.ID(int64(config.Conf.TelegramChatId)),
+			ChatID: tu.ID(int64(config.Conf.TelegramChannelId)),
 			Media:  media,
 		},
 	)

@@ -15,9 +15,9 @@ type Config struct {
 	BskyHandle string
 
 	// Telegram
-	TelegramBotToken string
-	TelegramChatId   int
-	TelegramOwner    int
+	TelegramBotToken  string
+	TelegramChannelId int
+	TelegramOwner     int
 
 	// Twitter
 	TwitterConsumerKey    string
@@ -78,9 +78,9 @@ func GetConfig() *Config {
 		BskyHandle: getStringEnvVariable("BSKY_HANDLE"),
 
 		// Telegram
-		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
-		TelegramChatId:   getIntEnvVariable("TELEGRAM_CHAT_ID"),
-		TelegramOwner:    getIntEnvVariable("TELEGRAM_OWNER"),
+		TelegramBotToken:  getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
+		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID"),
+		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER"),
 
 		// Twitter
 		TwitterConsumerKey:    getStringEnvVariable("TWITTER_CONSUMER_KEY"),

@@ -34,7 +34,7 @@ func main() {
 	logger.Log("Started program")
 
 	for {
-		fmt.Println("Checking bsky posts")
+		logger.Log("Checking bsky posts")
 		feed, err := services.GetBlueskyFeed()
 		if err != nil {
 			logger.Error("Bluesky error:", err)
@@ -73,7 +73,7 @@ func main() {
 
 			setLastPostedURI(post.Post.Uri)
 		}
-		fmt.Println("Waiting", config.Conf.PollInterval)
+		logger.Log("Waiting", config.Conf.PollInterval)
 		time.Sleep(config.Conf.PollInterval)
 	}
 }

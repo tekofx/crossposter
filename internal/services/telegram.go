@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"sync"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -11,25 +10,17 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-var lock = &sync.Mutex{}
-
 var bot *telego.Bot
 
 func InitializeTelegram() {
-	if bot == nil {
-		lock.Lock()
-		defer lock.Unlock()
-		if bot == nil {
-			var botErr error
-			bot, botErr = telego.NewBot(config.Conf.TelegramBotToken)
-			logger.Log("Logged in Telegram as", bot.Username())
+	var botErr error
+	bot, botErr = telego.NewBot(config.Conf.TelegramBotToken)
+	logger.Log("Logged in Telegram as", bot.Username())
 
-			if botErr != nil {
-				logger.Fatal(botErr)
-			}
-
-		}
+	if botErr != nil {
+		logger.Fatal(botErr)
 	}
+
 }
 
 func PostToTelegram(post model.BskyPost) error {

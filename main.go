@@ -1,10 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -16,25 +13,6 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 )
-
-func getBlueskyFeed(handle string) (*model.BskyFeedResp, error) {
-	// Bluesky doesn't have an official Go SDK, so we'll call the feed generator REST API
-	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5&filter=posts_with_media", handle)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-
-	var feed model.BskyFeedResp
-	err = json.Unmarshal(body, &feed)
-	if err != nil {
-		return nil, err
-	}
-
-	return &feed, nil
-}
 
 func getLastPostedURI() string {
 	data, err := os.ReadFile(config.Conf.StateFile)
@@ -76,7 +54,7 @@ func main() {
 
 	for {
 		fmt.Println("Checking bsky posts")
-		feed, err := getBlueskyFeed(config.Conf.BskyHandle)
+		feed, err := services.GetBlueskyFeed()
 		if err != nil {
 			logger.Error("Bluesky error:", err)
 			time.Sleep(config.Conf.PollInterval)
@@ -85,7 +63,6 @@ func main() {
 		last := getLastPostedURI()
 		var newPosts []model.BskyPost
 		for _, post := range feed.Posts {
-			fmt.Println(post.Post.Record.Text, post.Reason)
 			if post.Post.Uri == last {
 				break
 			}

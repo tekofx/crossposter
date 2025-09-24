@@ -11,11 +11,22 @@ import (
 )
 
 type Config struct {
-	BskyHandle       string
+	// Bluesky
+	BskyHandle string
+
+	// Telegram
 	TelegramBotToken string
 	TelegramChatId   int
-	PollInterval     time.Duration
-	StateFile        string
+
+	// Twitter
+	TwitterConsumerKey    string
+	TwitterConsumerSecret string
+	TwitterAccessToken    string
+	TwitterAccessSecret   string
+
+	// Other config
+	PollInterval time.Duration
+	StateFile    string
 }
 
 var lock = &sync.Mutex{}
@@ -62,11 +73,22 @@ func GetConfig() *Config {
 	}
 
 	return &Config{
-		BskyHandle:       getStringEnvVariable("BSKY_HANDLE"),
+		// Bluesky
+		BskyHandle: getStringEnvVariable("BSKY_HANDLE"),
+
+		// Telegram
 		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
 		TelegramChatId:   getIntEnvVariable("TELEGRAM_CHAT_ID"),
-		PollInterval:     60 * time.Second,
-		StateFile:        "last_bsky_post.txt",
+
+		// Twitter
+		TwitterConsumerKey:    getStringEnvVariable("TWITTER_CONSUMER_KEY"),
+		TwitterConsumerSecret: getStringEnvVariable("TWITTER_CONSUMER_SECRET"),
+		TwitterAccessToken:    getStringEnvVariable("TWITTER_ACCESS_TOKEN"),
+		TwitterAccessSecret:   getStringEnvVariable("TWITTER_ACCESS_SECRET"),
+
+		// Other config
+		PollInterval: 60 * time.Second,
+		StateFile:    "last_bsky_post.txt",
 	}
 
 }

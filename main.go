@@ -27,13 +27,9 @@ func setLastPostedURI(uri string) {
 func main() {
 	config.InitializeConfig()
 	services.InitializeTelegram()
+	//services.InitializeTwitter()
 
 	logger.Log("Started program")
-	// Twitter client
-	// config := oauth1.NewConfig(twitterConsumerKey, twitterConsumerSecret)
-	// token := oauth1.NewToken(twitterAccessToken, twitterAccessSecret)
-	// httpClient := config.Client(oauth1.NoContext, token)
-	// twClient := twitter.NewClient(httpClient)
 
 	for {
 		fmt.Println("Checking bsky posts")

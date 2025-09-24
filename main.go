@@ -54,10 +54,25 @@ func postToTelegram(bot *telego.Bot, post model.BskyPost) error {
 	var err error
 
 	if len(post.Post.Embed.Images) > 0 {
+		var media []telego.InputMedia
+		for _, image := range post.Post.Embed.Images {
+			inputFile := telego.InputFile{
+				URL: image.Fullsize,
+			}
 
-		inputFile := telego.InputFile{
-			URL: post.Post.Embed.Images[0].Fullsize,
+			media = append(media, &telego.InputMediaPhoto{
+				Media: inputFile,
+			})
+
 		}
+
+		bot.SendMediaGroup(
+			context.Background(),
+			&telego.SendMediaGroupParams{
+				ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
+				Media:  media,
+			},
+		)
 
 		_, err = bot.SendPhoto(
 			context.Background(),

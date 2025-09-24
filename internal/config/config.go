@@ -17,6 +17,7 @@ type Config struct {
 	// Telegram
 	TelegramBotToken string
 	TelegramChatId   int
+	TelegramOwner    int
 
 	// Twitter
 	TwitterConsumerKey    string
@@ -79,6 +80,7 @@ func GetConfig() *Config {
 		// Telegram
 		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
 		TelegramChatId:   getIntEnvVariable("TELEGRAM_CHAT_ID"),
+		TelegramOwner:    getIntEnvVariable("TELEGRAM_OWNER"),
 
 		// Twitter
 		TwitterConsumerKey:    getStringEnvVariable("TWITTER_CONSUMER_KEY"),

@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dghubble/go-twitter/twitter"
-	"github.com/mymmrac/telego"
 	config "github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
@@ -26,24 +24,9 @@ func setLastPostedURI(uri string) {
 	os.WriteFile(config.Conf.StateFile, []byte(uri), 0644)
 }
 
-func postToTwitter(client *twitter.Client, text string) error {
-	// X/Twitter limit: 280 chars
-	if len(text) > 280 {
-		text = text[:277] + "..."
-	}
-	_, _, err := client.Statuses.Update(text, nil)
-	return err
-}
-
 func main() {
 	config.InitializeConfig()
-
-	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
-	logger.Log("Logged in Telegram as", bot.Username())
-
-	if botErr != nil {
-		logger.Fatal(botErr)
-	}
+	services.InitializeTelegram()
 
 	logger.Log("Started program")
 	// Twitter client
@@ -79,7 +62,7 @@ func main() {
 		}
 		for _, post := range newPosts {
 			logger.Log("Posting post", post.Post.Uri)
-			err = services.PostToTelegram(bot, post)
+			err = services.PostToTelegram(post)
 			if err != nil {
 				logger.Error(err)
 			}

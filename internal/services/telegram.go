@@ -2,14 +2,37 @@ package services
 
 import (
 	"context"
+	"sync"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-func PostToTelegram(bot *telego.Bot, post model.BskyPost) error {
+var lock = &sync.Mutex{}
+
+var bot *telego.Bot
+
+func InitializeTelegram() {
+	if bot == nil {
+		lock.Lock()
+		defer lock.Unlock()
+		if bot == nil {
+			var botErr error
+			bot, botErr = telego.NewBot(config.Conf.TelegramBotToken)
+			logger.Log("Logged in Telegram as", bot.Username())
+
+			if botErr != nil {
+				logger.Fatal(botErr)
+			}
+
+		}
+	}
+}
+
+func PostToTelegram(post model.BskyPost) error {
 	if len(post.Post.Embed.Images) == 0 {
 		_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
 			ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
@@ -17,12 +40,12 @@ func PostToTelegram(bot *telego.Bot, post model.BskyPost) error {
 		})
 		return err
 	} else {
-		err := postImages(bot, post)
+		err := postImages(post)
 		return err
 	}
 }
 
-func postImages(bot *telego.Bot, post model.BskyPost) error {
+func postImages(post model.BskyPost) error {
 	var media []telego.InputMedia
 	for i, image := range post.Post.Embed.Images {
 		inputFile := telego.InputFile{

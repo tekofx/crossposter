@@ -7,6 +7,7 @@ import (
 	"time"
 
 	config "github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
@@ -27,6 +28,7 @@ func setLastPostedURI(uri string) {
 func main() {
 	config.InitializeConfig()
 	services.InitializeTelegram()
+	database.InitializeDb()
 	//services.InitializeTwitter()
 
 	logger.Log("Started program")

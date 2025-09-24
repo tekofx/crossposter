@@ -1,0 +1,56 @@
+package services
+
+import (
+	"context"
+
+	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/model"
+)
+
+func PostToTelegram(bot *telego.Bot, post model.BskyPost) error {
+	if len(post.Post.Embed.Images) == 0 {
+		_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
+			ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
+			Text:   post.Post.Record.Text,
+		})
+		return err
+	} else {
+		err := postImages(bot, post)
+		return err
+	}
+}
+
+func postImages(bot *telego.Bot, post model.BskyPost) error {
+	var media []telego.InputMedia
+	for i, image := range post.Post.Embed.Images {
+		inputFile := telego.InputFile{
+			URL: image.Fullsize,
+		}
+
+		if i == 0 {
+			media = append(media, &telego.InputMediaPhoto{
+				Type:    "photo",
+				Media:   inputFile,
+				Caption: post.Post.Record.Text,
+			})
+		} else {
+			media = append(media, &telego.InputMediaPhoto{
+				Type:  "photo",
+				Media: inputFile,
+			})
+		}
+
+	}
+
+	_, err := bot.SendMediaGroup(
+		context.Background(),
+		&telego.SendMediaGroupParams{
+			ChatID: tu.ID(int64(config.Conf.TelegramChatId)),
+			Media:  media,
+		},
+	)
+
+	return err
+}

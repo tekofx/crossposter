@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,10 +11,10 @@ import (
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/mymmrac/telego"
-	tu "github.com/mymmrac/telego/telegoutil"
 	config "github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/services"
 )
 
 func getBlueskyFeed(handle string) (*model.BskyFeedResp, error) {
@@ -47,48 +46,6 @@ func getLastPostedURI() string {
 
 func setLastPostedURI(uri string) {
 	os.WriteFile(config.Conf.StateFile, []byte(uri), 0644)
-}
-
-func postToTelegram(bot *telego.Bot, post model.BskyPost) error {
-
-	var err error
-
-	if len(post.Post.Embed.Images) > 0 {
-		var media []telego.InputMedia
-		for _, image := range post.Post.Embed.Images {
-			inputFile := telego.InputFile{
-				URL: image.Fullsize,
-			}
-
-			media = append(media, &telego.InputMediaPhoto{
-				Media: inputFile,
-			})
-
-		}
-
-		bot.SendMediaGroup(
-			context.Background(),
-			&telego.SendMediaGroupParams{
-				ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
-				Media:  media,
-			},
-		)
-
-		_, err = bot.SendPhoto(
-			context.Background(),
-			&telego.SendPhotoParams{
-				ChatID:  tu.ID(int64(config.GetConfig().TelegramChatId)),
-				Photo:   inputFile,
-				Caption: post.Post.Record.Text,
-			})
-	} else {
-		_, err = bot.SendMessage(context.Background(), &telego.SendMessageParams{
-			ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
-			Text:   post.Post.Record.Text,
-		})
-	}
-
-	return err
 }
 
 func postToTwitter(client *twitter.Client, text string) error {
@@ -145,7 +102,7 @@ func main() {
 		}
 		for _, post := range newPosts {
 			logger.Log("Posting post", post.Post.Uri)
-			err = postToTelegram(bot, post)
+			err = services.PostToTelegram(bot, post)
 			if err != nil {
 				logger.Error(err)
 			}

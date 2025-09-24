@@ -11,6 +11,11 @@ type BskyPost struct {
 		Embed  BskyEmbed
 		Record BskyRecord `json:"record"`
 	}
+	Reason *BskyReason `json:"reason,omitempty"`
+}
+
+type BskyReason struct {
+	Type string `json:"$type"`
 }
 
 type BskyRecord struct {
@@ -28,5 +33,5 @@ type BskyEmbed struct {
 
 type BskyImage struct {
 	Thumb    string
-	fullsize string
+	Fullsize string
 }

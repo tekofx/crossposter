@@ -20,7 +20,7 @@ import (
 
 func getBlueskyFeed(handle string) (*model.BskyFeedResp, error) {
 	// Bluesky doesn't have an official Go SDK, so we'll call the feed generator REST API
-	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5", handle)
+	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5&filter=posts_with_media", handle)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -49,18 +49,29 @@ func setLastPostedURI(uri string) {
 	os.WriteFile(config.Conf.StateFile, []byte(uri), 0644)
 }
 
-func postToTelegram(botToken string, text string) error {
-	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
-	logger.Log("Logged in Telegram as", bot.Username())
+func postToTelegram(bot *telego.Bot, post model.BskyPost) error {
 
-	if botErr != nil {
-		logger.Fatal(botErr)
+	var err error
+
+	if len(post.Post.Embed.Images) > 0 {
+
+		inputFile := telego.InputFile{
+			URL: post.Post.Embed.Images[0].Fullsize,
+		}
+
+		_, err = bot.SendPhoto(
+			context.Background(),
+			&telego.SendPhotoParams{
+				ChatID:  tu.ID(int64(config.GetConfig().TelegramChatId)),
+				Photo:   inputFile,
+				Caption: post.Post.Record.Text,
+			})
+	} else {
+		_, err = bot.SendMessage(context.Background(), &telego.SendMessageParams{
+			ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
+			Text:   post.Post.Record.Text,
+		})
 	}
-
-	_, err := bot.SendMessage(context.Background(), &telego.SendMessageParams{
-		ChatID: tu.ID(int64(config.GetConfig().TelegramChatId)),
-		Text:   text,
-	})
 
 	return err
 }
@@ -76,6 +87,14 @@ func postToTwitter(client *twitter.Client, text string) error {
 
 func main() {
 	config.InitializeConfig()
+
+	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
+	logger.Log("Logged in Telegram as", bot.Username())
+
+	if botErr != nil {
+		logger.Fatal(botErr)
+	}
+
 	logger.Log("Started program")
 	// Twitter client
 	// config := oauth1.NewConfig(twitterConsumerKey, twitterConsumerSecret)
@@ -94,9 +113,14 @@ func main() {
 		last := getLastPostedURI()
 		var newPosts []model.BskyPost
 		for _, post := range feed.Posts {
+			fmt.Println(post.Post.Record.Text, post.Reason)
 			if post.Post.Uri == last {
 				break
 			}
+			if post.Reason != nil {
+				break
+			}
+
 			newPosts = append(newPosts, post)
 		}
 		if len(newPosts) == 0 {
@@ -110,7 +134,7 @@ func main() {
 		}
 		for _, post := range newPosts {
 			logger.Log("Posting post", post.Post.Uri)
-			err = postToTelegram(config.Conf.TelegramBotToken, post.Post.Record.Text)
+			err = postToTelegram(bot, post)
 			if err != nil {
 				logger.Error(err)
 			}

@@ -128,10 +128,6 @@ func main() {
 			time.Sleep(config.Conf.PollInterval)
 			continue
 		}
-		// Reverse to post oldest first
-		for i, j := 0, len(newPosts)-1; i < j; i, j = i+1, j-1 {
-			newPosts[i], newPosts[j] = newPosts[j], newPosts[i]
-		}
 		for _, post := range newPosts {
 			logger.Log("Posting post", post.Post.Uri)
 			err = postToTelegram(bot, post)
@@ -141,7 +137,7 @@ func main() {
 			//_ = postToTwitter(twClient, txt)
 			setLastPostedURI(post.Post.Uri)
 		}
-		time.Sleep(config.Conf.PollInterval)
 		fmt.Println("Waiting", config.Conf.PollInterval)
+		time.Sleep(config.Conf.PollInterval)
 	}
 }

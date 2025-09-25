@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/lib/pq"
+)
 
 type Post struct {
 	Id int `gorm:"primaryKey";autoIncrement:true"`
@@ -22,7 +26,7 @@ type Post struct {
 
 	// Data
 	Text   string
-	Images []string
+	Images pq.StringArray `gorm:"type:text[]"`
 
 	// Meta
 	Date time.Time `gorm:"type:DATE;"`

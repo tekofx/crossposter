@@ -10,7 +10,7 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-func GetBlueskyFeed() (*model.BskyFeedResp, error) {
+func GetBlueskyPosts() ([]model.Post, error) {
 	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5&filter=posts_with_media", config.Conf.BskyHandle)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -25,5 +25,28 @@ func GetBlueskyFeed() (*model.BskyFeedResp, error) {
 		return nil, err
 	}
 
-	return &feed, nil
+	var posts []model.Post
+	for _, bskyPost := range feed.Posts {
+
+		var images []string
+
+		if len(bskyPost.Post.Embed.Images) > 0 {
+			for _, image := range bskyPost.Post.Embed.Images {
+				images = append(images, image.Fullsize)
+			}
+		}
+
+		posts = append(posts, model.Post{
+			BskyId:   bskyPost.Post.Uri,
+			Text:     bskyPost.Post.Record.Text,
+			Images:   images,
+			Date:     bskyPost.Post.CreatedAt,
+			IsQuote:  bskyPost.IsQuote(),
+			IsRepost: bskyPost.IsRepost(),
+			IsReply:  bskyPost.IsReply(),
+		})
+
+	}
+
+	return posts, nil
 }

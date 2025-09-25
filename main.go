@@ -7,7 +7,6 @@ import (
 	"time"
 
 	config "github.com/tekofx/crossposter/internal/config"
-	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
@@ -28,26 +27,26 @@ func setLastPostedURI(uri string) {
 func main() {
 	config.InitializeConfig()
 	services.InitializeTelegram()
-	database.InitializeDb()
+	//database.InitializeDb()
 	//services.InitializeTwitter()
 
 	logger.Log("Started program")
 
 	for {
 		logger.Log("Checking bsky posts")
-		feed, err := services.GetBlueskyFeed()
+		posts, err := services.GetBlueskyPosts()
 		if err != nil {
 			logger.Error("Bluesky error:", err)
 			time.Sleep(config.Conf.PollInterval)
 			continue
 		}
 		last := getLastPostedURI()
-		var newPosts []model.BskyPost
-		for _, post := range feed.Posts {
-			if post.Post.Uri == last {
+		var newPosts []model.Post
+		for _, post := range posts {
+			if post.BskyId == last {
 				break
 			}
-			if post.Reason != nil {
+			if post.IsReply || post.IsRepost || post.IsQuote {
 				break
 			}
 
@@ -59,19 +58,20 @@ func main() {
 			continue
 		}
 		for _, post := range newPosts {
-			logger.Log("Posting post", post.Post.Uri)
-			err = services.PostToTelegram(post)
+			logger.Log("Posting post", post.BskyId)
+			err = services.PostToTelegram(&post)
 			if err != nil {
 				logger.Error(err)
 				services.NotifyOwner(fmt.Sprintf("Could not post to telegram channel: %s", err))
 			}
+			post.PublishedOnTelegram = true
 			// err := services.PostToTwitter("test")
 			// if err != nil {
 			// 	logger.Error(err)
 			// 	services.NotifyOwner(fmt.Sprintf("Could not post to Twitter account: %s", err))
 			// }
 
-			setLastPostedURI(post.Post.Uri)
+			setLastPostedURI(post.BskyId)
 		}
 		logger.Log("Waiting", config.Conf.PollInterval)
 		time.Sleep(config.Conf.PollInterval)

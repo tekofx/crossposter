@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type BskyFeedResp struct {
 	Posts []BskyPost `json:"feed"`
@@ -14,7 +16,7 @@ type BskyPost struct {
 		Record    BskyRecord `json:"record"`
 		CreatedAt time.Time  `json:"createdAt"`
 	}
-	Reason *BskyReason `json:"reason,omitempty"`
+	Reason *BskyReason `json:"reason"`
 	Reply  *BskyReply  `json:"reply,omitempty"`
 }
 
@@ -49,6 +51,7 @@ type BskyReason struct {
 	 * - Repost: app.bsky.feed.defs#reasonRepost
 	 */
 	Type string `json:"$type"`
+	Uri  string `json:"uri"`
 }
 
 type BskyRecord struct {

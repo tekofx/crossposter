@@ -43,11 +43,13 @@ func main() {
 		last := getLastPostedURI()
 		var newPosts []model.Post
 		for _, post := range posts {
+
 			if post.BskyId == last {
-				break
+				continue
 			}
+
 			if post.IsReply || post.IsRepost || post.IsQuote {
-				break
+				continue
 			}
 
 			newPosts = append(newPosts, post)
@@ -58,7 +60,7 @@ func main() {
 			continue
 		}
 		for _, post := range newPosts {
-			logger.Log("Posting post", post.BskyId)
+
 			err = services.PostToTelegram(&post)
 			if err != nil {
 				logger.Error(err)
@@ -71,7 +73,7 @@ func main() {
 			// 	services.NotifyOwner(fmt.Sprintf("Could not post to Twitter account: %s", err))
 			// }
 
-			setLastPostedURI(post.BskyId)
+			//setLastPostedURI(post.BskyId)
 		}
 		logger.Log("Waiting", config.Conf.PollInterval)
 		time.Sleep(config.Conf.PollInterval)

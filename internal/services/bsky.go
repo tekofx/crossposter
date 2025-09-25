@@ -11,7 +11,7 @@ import (
 )
 
 func GetBlueskyPosts() ([]model.Post, error) {
-	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5&filter=posts_with_media", config.Conf.BskyHandle)
+	url := fmt.Sprintf("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=5&filter=posts_no_replies", config.Conf.BskyHandle)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -27,9 +27,7 @@ func GetBlueskyPosts() ([]model.Post, error) {
 
 	var posts []model.Post
 	for _, bskyPost := range feed.Posts {
-
 		var images []string
-
 		if len(bskyPost.Post.Embed.Images) > 0 {
 			for _, image := range bskyPost.Post.Embed.Images {
 				images = append(images, image.Fullsize)

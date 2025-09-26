@@ -17,6 +17,7 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	postCommand(bh)
 	helpCommand(bh, bot)
 	queueCommand(bh, bot)
+	deleteNewestPostCommand(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: []telego.BotCommand{
@@ -29,6 +30,32 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	}
 	bot.SetMyCommands(context.Background(), &PrivateChatCommands)
 
+}
+
+func deleteNewestPostCommand(bh *th.BotHandler) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		post, err := services.GetNewestPost()
+
+		if post == nil {
+			_, err = utils.SendMessageToOwner(ctx, post.Text)
+			logger.Error(err)
+			return err
+		}
+
+		err = services.RemovePostByID(uint(post.Id))
+		if post == nil {
+			_, err = utils.SendMessageToOwner(ctx, post.Text)
+			logger.Error(err)
+			return err
+		}
+
+		_, err = utils.SendMessageToOwner(ctx, "Post eliminado")
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
+		return nil
+	}, th.CommandEqual("borrar"))
 }
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {

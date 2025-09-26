@@ -20,4 +20,6 @@ type Post struct {
 
 	// Meta
 	CreatedAt time.Time `gorm:"type:DATE;"`
+	HasText   bool
+	HasImages bool
 }

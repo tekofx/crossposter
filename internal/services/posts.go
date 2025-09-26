@@ -41,7 +41,6 @@ func GetNewestPost() (*model.Post, error) {
 		Order("created_at desc").
 		First(&post).Error
 	if err != nil {
-		fmt.Println("asdfadswf")
 		return nil, err
 	}
 	return &post, nil

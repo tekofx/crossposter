@@ -14,43 +14,88 @@ import (
 )
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
-	hi(bh)
 	postCommand(bh)
-	help(bh)
+	helpCommand(bh, bot)
+	queueCommand(bh, bot)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: []telego.BotCommand{
-			{Command: "hi", Description: "Hello"},
-			{Command: "post", Description: "Publica el post"},
 			{Command: "help", Description: "Mostrar mensaje de ayuda"},
+			{Command: "post", Description: "Publica el post"},
+			{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
+			{Command: "borrar", Description: "Elimina el post en cola"},
 		},
 		Scope: tu.ScopeAllPrivateChats(),
 	}
 	bot.SetMyCommands(context.Background(), &PrivateChatCommands)
+
 }
 
-func help(bh *th.BotHandler) {
+func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		msg := "Proceso de publicación:\n1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)\n2. Usa el comando /post para publicar."
+		post, err := services.GetNewestPost()
+		if post == nil {
+			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No hay contenido en cola")
+			return nil
+		}
+
+		if post.HasImages {
+			var inputMedia []telego.InputMedia
+			for i, image := range post.Images {
+				inputFile := telego.InputFile{
+					URL: image,
+				}
+				var inputMediaDocument telego.InputMediaDocument
+				inputMediaDocument = telego.InputMediaDocument{
+					Media: inputFile,
+				}
+				if i == 0 && post.HasText {
+					inputMediaDocument.Caption = post.Text
+				}
+				inputMedia = append(inputMedia, &inputMediaDocument)
+			}
+
+			_, err = bot.SendMediaGroup(ctx, &telego.SendMediaGroupParams{
+				ChatID: tu.ID(int64(config.Conf.TelegramOwner)),
+				Media:  inputMedia,
+			})
+
+			if err != nil {
+				logger.Error(err)
+				return err
+			}
+		} else {
+			_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Text)
+			if err != nil {
+				logger.Error(err)
+				return err
+			}
+		}
+		return nil
+	}, th.CommandEqual("cola"))
+}
+
+func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+
+		commands, _ := bot.GetMyCommands(context.Background(), &telego.GetMyCommandsParams{
+			Scope: tu.ScopeAllPrivateChats(),
+		})
+		msg := `Proceso de publicación:
+		1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)
+		2. Usa el comando /post para publicar.`
+
+		msg += "\nComandos\n"
+
+		for _, command := range commands {
+			msg += fmt.Sprintf("- /%s: %s\n", command.Command, command.Description)
+		}
 		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), msg)
 		if err != nil {
 			logger.Fatal(err)
 		}
 		return nil
 	}, th.CommandEqual("help"))
-}
-
-func hi(bh *th.BotHandler) {
-	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(update.Message.Chat.ID),
-			fmt.Sprintf("Hello %s!", update.Message.From.FirstName),
-		))
-		if err != nil {
-			logger.Fatal(err)
-		}
-		return nil
-	}, th.CommandEqual("hi"))
 }
 
 func postCommand(bh *th.BotHandler) {

@@ -25,18 +25,23 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			return nil
 		}
 
-		post := model.Post{}
+		post, _ := services.GetNewestPost()
+		if post == nil {
+			post = &model.Post{}
+		}
 
 		if update.Message.Document != nil {
 			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
 			downloadUrl := bot.FileDownloadURL(update.Message.Document.FileID)
 			post.Images = append(post.Images, downloadUrl)
+			post.HasImages = true
 		} else {
-			post.Text = update.Message.Text
 			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido texto %s", update.Message.Text))
+			post.Text = update.Message.Text
+			post.HasText = true
 		}
 
-		services.InsertOrUpdatePost(&post)
+		services.InsertOrUpdatePost(post)
 		return nil
 
 	}, utils.FromBotOwner())

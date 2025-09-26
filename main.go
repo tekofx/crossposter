@@ -1,69 +1,47 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"context"
 
+	"github.com/mymmrac/telego"
+	th "github.com/mymmrac/telego/telegohandler"
+	"github.com/tekofx/crossposter/internal/commands"
 	config "github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/model"
-	"github.com/tekofx/crossposter/internal/services"
 )
 
 func main() {
 	config.InitializeConfig()
-	services.InitializeTelegram()
+	//services.InitializeTelegram()
 	database.InitializeDb()
 	//services.InitializeTwitter()
+	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 
-	logger.Log("Started program")
+	if botErr != nil {
+		logger.Fatal(botErr)
+	}
 
-	for {
-		logger.Log("Checking bsky posts")
-		posts, err := services.GetBlueskyPosts()
-		if err != nil {
-			logger.Error("Bluesky error:", err)
-			time.Sleep(config.Conf.PollInterval)
-			continue
-		}
-		var newPosts []model.Post
-		for _, post := range posts {
+	// Get updates channel
+	updates, err := bot.UpdatesViaLongPolling(context.Background(), nil)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
-			if services.PostExistsInDatabase(post.BskyId) {
-				break
-			}
+	// Create bot handler and specify from where to get updates
+	bh, err := th.NewBotHandler(bot, updates)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
-			if post.IsReply || post.IsRepost || post.IsQuote {
-				continue
-			}
+	// Add commands
+	commands.AddCommands(bh, bot)
 
-			newPosts = append(newPosts, post)
-		}
-		if len(newPosts) == 0 {
-			logger.Log("No new posts")
-			logger.Log("Waiting", config.Conf.PollInterval)
-			time.Sleep(config.Conf.PollInterval)
-			continue
-		}
-		for _, post := range newPosts {
-			logger.Log("Posting", post.BskyId)
-			err = services.PostToTelegram(&post)
-			if err != nil {
-				logger.Error(err)
-				services.NotifyOwner(fmt.Sprintf("Could not post to telegram channel: %s", err))
-			}
-			post.PublishedOnTelegram = true
-			// err := services.PostToTwitter("test")
-			// if err != nil {
-			// 	logger.Error(err)
-			// 	services.NotifyOwner(fmt.Sprintf("Could not post to Twitter account: %s", err))
-			// }
-
-			//setLastPostedURI(post.BskyId)
-			services.InsertPost(&post)
-		}
-		logger.Log("Waiting", config.Conf.PollInterval)
-		time.Sleep(config.Conf.PollInterval)
+	// Stop handling updates
+	defer func() { _ = bh.Stop() }()
+	logger.Log("Bot started as", bot.Username())
+	err = bh.Start()
+	if err != nil {
+		logger.Fatal(err)
 	}
 }

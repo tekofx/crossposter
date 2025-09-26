@@ -12,7 +12,8 @@ import (
 
 type Config struct {
 	// Bluesky
-	BskyHandle string
+	BskyHandle      string
+	BskyAppPassword string
 
 	// Telegram
 	TelegramBotToken  string
@@ -75,7 +76,8 @@ func GetConfig() *Config {
 
 	return &Config{
 		// Bluesky
-		BskyHandle: getStringEnvVariable("BSKY_HANDLE"),
+		BskyHandle:      getStringEnvVariable("BSKY_HANDLE"),
+		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD"),
 
 		// Telegram
 		TelegramBotToken:  getStringEnvVariable("TELEGRAM_BOT_TOKEN"),

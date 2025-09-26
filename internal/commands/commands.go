@@ -16,15 +16,28 @@ import (
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	hi(bh)
 	post(bh)
+	help(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: []telego.BotCommand{
 			{Command: "hi", Description: "Hello"},
 			{Command: "post", Description: "Publica el post"},
+			{Command: "help", Description: "Mostrar mensaje de ayuda"},
 		},
 		Scope: tu.ScopeAllPrivateChats(),
 	}
 	bot.SetMyCommands(context.Background(), &PrivateChatCommands)
+}
+
+func help(bh *th.BotHandler) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		msg := "Proceso de publicación:\n1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)\n2. Usa el comando /post para publicar."
+		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), msg)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		return nil
+	}, th.CommandEqual("help"))
 }
 
 func hi(bh *th.BotHandler) {

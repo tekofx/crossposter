@@ -23,7 +23,6 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 }
 
 func hi(bh *th.BotHandler) {
-	fmt.Println("asdf")
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(update.Message.Chat.ID),

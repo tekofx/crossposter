@@ -8,6 +8,7 @@ import (
 	"github.com/tekofx/crossposter/internal/commands"
 	config "github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/database"
+	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
 )
 
@@ -36,6 +37,7 @@ func main() {
 
 	// Add commands
 	commands.AddCommands(bh, bot)
+	handlers.AddHandlers(bh)
 
 	// Stop handling updates
 	defer func() { _ = bh.Stop() }()

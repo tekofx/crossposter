@@ -1,20 +1,22 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/config"
-	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/utils"
 
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func AddHandlers(bh *th.BotHandler) {
-	onNewPrivateMessage(bh)
+func AddHandlers(bh *th.BotHandler, bot *telego.Bot) {
+	onNewPrivateMessage(bh, bot)
 
 }
 
-func onNewPrivateMessage(bh *th.BotHandler) {
+func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		if len(update.Message.Photo) > 0 {
@@ -22,11 +24,17 @@ func onNewPrivateMessage(bh *th.BotHandler) {
 			return nil
 		}
 
+		if model.PostToPublish == nil {
+			model.PostToPublish = &model.Post{}
+		}
+
 		if update.Message.Document != nil {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Received message with documents")
+			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
+			downloadUrl := bot.FileDownloadURL(update.Message.Document.FileID)
+			model.PostToPublish.Images = append(model.PostToPublish.Images, downloadUrl)
 		} else {
-			services.SendBskyTextPost(update.Message.Text)
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Received text message")
+			model.PostToPublish.Text = update.Message.Text
+			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido texto %s", update.Message.Text))
 		}
 
 		return nil

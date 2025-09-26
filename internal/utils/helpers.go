@@ -7,10 +7,14 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func SendMessage(ctx *th.Context, chatId int64, text string) *telego.Message {
-	msg, _ := ctx.Bot().SendMessage(ctx, tu.Message(
+func SendMessage(ctx *th.Context, chatId int64, text string) (*telego.Message, error) {
+	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		tu.ID(chatId),
 		text,
 	))
-	return msg
+
+	if err != nil {
+		return nil, err
+	}
+	return msg, nil
 }

@@ -40,7 +40,7 @@ func main() {
 
 	// Add commands
 	commands.AddCommands(bh, bot)
-	handlers.AddHandlers(bh)
+	handlers.AddHandlers(bh, bot)
 
 	// Stop handling updates
 	defer func() { _ = bh.Stop() }()

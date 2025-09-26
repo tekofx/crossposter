@@ -7,15 +7,20 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/utils"
 )
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	hi(bh)
+	post(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: []telego.BotCommand{
 			{Command: "hi", Description: "Hello"},
+			{Command: "post", Description: "Publica el post"},
 		},
 		Scope: tu.ScopeAllPrivateChats(),
 	}
@@ -33,4 +38,40 @@ func hi(bh *th.BotHandler) {
 		}
 		return nil
 	}, th.CommandEqual("hi"))
+}
+
+func post(bh *th.BotHandler) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		if model.PostToPublish == nil {
+			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Primero debes enviar el contenido a postear")
+			return nil
+		}
+		reply := "Posteado\n"
+		reply += "✅ Bsky\n"
+		reply += "❌ Twitter\n"
+		reply += "✅ Telegram\n"
+
+		// bskyErr := services.PostToBsky(post)
+		// if bskyErr == nil {
+		// 	reply += "✅ Bsky"
+		// }
+		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
+		if err != nil {
+			logger.Error(err)
+		}
+		model.PostToPublish = nil
+		return nil
+	}, th.CommandEqual("post"))
+}
+
+func sendPost(ctx *th.Context) error {
+
+	reply := "test"
+	// bskyErr := services.PostToBsky(post)
+	// if bskyErr == nil {
+	// 	reply += "✅ Bsky"
+	// }
+	_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
+	model.PostToPublish = nil
+	return err
 }

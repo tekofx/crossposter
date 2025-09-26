@@ -10,12 +10,15 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/services"
 )
 
 func main() {
 	config.InitializeConfig()
 	//services.InitializeTelegram()
 	database.InitializeDb()
+
+	services.InitializeBluesky()
 	//services.InitializeTwitter()
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 

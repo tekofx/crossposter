@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/lib/pq"
 )
 
 type Post struct {
@@ -12,7 +10,7 @@ type Post struct {
 
 	// Data
 	Text   string
-	Images pq.StringArray `gorm:"type:text[]"`
+	Images []string `gorm:"type:text;serializer:json"`
 
 	PublishedOnBsky     bool
 	PublishedOnTelegram bool

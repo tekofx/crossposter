@@ -60,6 +60,7 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+
 		post, err := services.GetNewestPost()
 		if post == nil {
 			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No hay contenido en cola")
@@ -67,26 +68,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 		}
 
 		if post.HasImages {
-			var inputMedia []telego.InputMedia
-			for i, image := range post.Images {
-				inputFile := telego.InputFile{
-					URL: image,
-				}
-				var inputMediaDocument telego.InputMediaDocument
-				inputMediaDocument = telego.InputMediaDocument{
-					Media: inputFile,
-				}
-				if i == 0 && post.HasText {
-					inputMediaDocument.Caption = post.Text
-				}
-				inputMedia = append(inputMedia, &inputMediaDocument)
-			}
-
-			_, err = bot.SendMediaGroup(ctx, &telego.SendMediaGroupParams{
-				ChatID: tu.ID(int64(config.Conf.TelegramOwner)),
-				Media:  inputMedia,
-			})
-
+			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post.Images, post.Text)
 			if err != nil {
 				logger.Error(err)
 				return err

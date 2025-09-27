@@ -24,19 +24,21 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Envía la imagen sin comprimir")
 			return nil
 		}
-
 		post, _ := services.GetNewestPost()
 		if post == nil {
 			post = &model.Post{}
 		}
 
 		if update.Message.Document != nil {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
-			downloadUrl := bot.FileDownloadURL(update.Message.Document.FileID)
-			post.Images = append(post.Images, downloadUrl)
+			if !utils.IsImageExtension(update.Message.Document.FileName) {
+				utils.SendMessageToOwner(ctx, "No se admite este archivo. Envía una imagen.")
+				return nil
+			}
+			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
+			post.Images = append(post.Images, update.Message.Document.FileID)
 			post.HasImages = true
 		} else {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), fmt.Sprintf("Recibido texto %s", update.Message.Text))
+			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido texto %s", update.Message.Text))
 			post.Text = update.Message.Text
 			post.HasText = true
 		}

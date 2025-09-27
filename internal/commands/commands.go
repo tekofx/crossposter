@@ -118,16 +118,21 @@ func postCommand(bh *th.BotHandler) {
 			_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No se ha enviado contenido para publicar.")
 			return nil
 		}
+
+		utils.SendMessageToOwner(ctx, "Publicando post...")
 		reply := "Posteado\n"
 		reply += "✅ Bsky\n"
 		reply += "❌ Twitter\n"
 		reply += "✅ Telegram\n"
 		fmt.Println(post.Id)
 
-		// bskyErr := services.PostToBsky(post)
-		// if bskyErr == nil {
-		// 	reply += "✅ Bsky"
-		// }
+		bskyErr := services.PostToBsky(post)
+		if bskyErr == nil {
+			reply += "✅ Bsky"
+		} else {
+			logger.Error(bskyErr)
+			return err
+		}
 		_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
 		if err != nil {
 			logger.Error(err)

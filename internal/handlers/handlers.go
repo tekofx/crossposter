@@ -5,6 +5,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/utils"
@@ -35,7 +36,12 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 				return nil
 			}
 			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
-			post.Images = append(post.Images, update.Message.Document.FileID)
+			file, err := utils.GetDocumentAsImage(bot, update.Message.Document.FileID)
+			if err != nil {
+				logger.Error(err)
+				return err
+			}
+			post.Images = append(post.Images, *file)
 			post.HasImages = true
 		} else {
 			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido texto %s", update.Message.Text))

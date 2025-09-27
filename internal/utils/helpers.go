@@ -39,17 +39,12 @@ func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
 	return msg, nil
 }
 
-func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, fileIDs []string, text string) error {
+func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, filenames []string, text string) error {
 	var media []telego.InputMedia
 
-	for i, fileID := range fileIDs {
-		image, err := getDocumentAsImage(bot, fileID)
-		if err != nil {
-			logger.Error(err)
-			return err
-		}
+	for i, filename := range filenames {
 
-		downloadedImage, err := os.Open(*image)
+		downloadedImage, err := os.Open(filename)
 		if err != nil {
 			logger.Error("Error opening file:", err)
 			return err
@@ -79,7 +74,7 @@ func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, fileIDs []string, te
 	return err
 }
 
-func getDocumentAsImage(bot *telego.Bot, fileId string) (*string, error) {
+func GetDocumentAsImage(bot *telego.Bot, fileId string) (*string, error) {
 	file, err := bot.GetFile(context.Background(), &telego.GetFileParams{FileID: fileId})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file info: %w", err)

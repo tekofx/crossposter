@@ -60,10 +60,14 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-
+		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post...")
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
 		post, err := services.GetNewestPost()
 		if post == nil {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No hay contenido en cola")
+			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
 
@@ -74,7 +78,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 				return err
 			}
 		} else {
-			_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Text)
+			_, err = utils.SendMessageToOwner(ctx, post.Text)
 			if err != nil {
 				logger.Error(err)
 				return err

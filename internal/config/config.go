@@ -43,6 +43,11 @@ func InitializeConfig() {
 			Conf = GetConfig()
 		}
 	}
+
+	err := os.Mkdir("data", 0755)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 func getIntEnvVariable(name string) int {

@@ -14,7 +14,7 @@ var Database *gorm.DB
 
 func InitializeDb() {
 	var err error
-	Database, err = gorm.Open(sqlite.Open("./database.db"), &gorm.Config{})
+	Database, err = gorm.Open(sqlite.Open("./data/database.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

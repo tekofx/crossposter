@@ -60,17 +60,17 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post...")
-		if err != nil {
-			logger.Error(err)
-			return err
-		}
+
 		post, err := services.GetNewestPost()
 		if post == nil {
 			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
-
+		_, err = utils.SendMessageToOwner(ctx, "Obteniendo post...")
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
 		if post.HasImages {
 			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post.Images, post.Text)
 			if err != nil {

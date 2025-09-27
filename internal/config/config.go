@@ -44,7 +44,12 @@ func InitializeConfig() {
 		}
 	}
 
-	err := os.Mkdir("data", 0755)
+	err := os.MkdirAll("data", 0755)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	err = os.MkdirAll("data/images", 0755)
 	if err != nil {
 		logger.Fatal(err)
 	}

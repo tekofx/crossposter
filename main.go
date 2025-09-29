@@ -19,7 +19,7 @@ func main() {
 	database.InitializeDb()
 
 	services.InitializeBluesky()
-	//services.InitializeTwitter()
+	services.InitializeTwitter()
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 
 	if botErr != nil {

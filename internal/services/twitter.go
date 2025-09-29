@@ -1,25 +1,43 @@
 package services
 
 import (
-	"github.com/dghubble/go-twitter/twitter"
-	"github.com/dghubble/oauth1"
+	"context"
+	"fmt"
+
+	"github.com/michimani/gotwi"
+	"github.com/michimani/gotwi/tweet/managetweet"
+	"github.com/michimani/gotwi/tweet/managetweet/types"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/logger"
 )
 
-var twitterClient *twitter.Client
+var twitterClient *gotwi.Client
 
 func InitializeTwitter() {
-	twitterConfig := oauth1.NewConfig(config.Conf.TwitterConsumerKey, config.Conf.TwitterConsumerSecret)
-	token := oauth1.NewToken(config.Conf.TwitterAccessToken, config.Conf.TwitterAccessSecret)
-	httpClient := twitterConfig.Client(oauth1.NoContext, token)
-	twitterClient = twitter.NewClient(httpClient)
+	in := &gotwi.NewClientInput{
+		AuthenticationMethod: gotwi.AuthenMethodOAuth1UserContext,
+		OAuthToken:           config.Conf.TwitterAccessToken,
+		OAuthTokenSecret:     config.Conf.TwitterAccessSecret,
+		APIKey:               config.Conf.TwitterConsumerKey,
+		APIKeySecret:         config.Conf.TwitterConsumerSecret,
+	}
+	var err error
+	twitterClient, err = gotwi.NewClient(in)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 func PostToTwitter(text string) error {
-	// X/Twitter limit: 280 chars
-	if len(text) > 280 {
-		text = text[:277] + "..."
+	p := &types.CreateInput{
+		Text: gotwi.String("Uwu"),
 	}
-	_, _, err := twitterClient.Statuses.Update(text, nil)
-	return err
+	res, err := managetweet.Create(context.Background(), twitterClient, p)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	fmt.Printf("[%s] %s\n", gotwi.StringValue(res.Data.ID), gotwi.StringValue(res.Data.Text))
+
+	return nil
 }

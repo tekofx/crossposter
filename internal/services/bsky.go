@@ -88,18 +88,17 @@ func InitializeBluesky() error {
 	return nil
 }
 
-func PostToBsky(post *model.Post) (*string, error) {
+func PostToBsky(post *model.Post) error {
 	var err error
-	var postUrl *string
 	if post.HasImages {
-		postUrl, err = postImages(post)
+		err = postImages(post)
 	} else {
-		postUrl, err = postText(post.Text)
+		err = postText(post)
 	}
 
 	post.PublishedOnBsky = err == nil
 
-	return postUrl, err
+	return err
 }
 
 func uploadBlob(image *model.Image) (*Blob, error) {
@@ -143,14 +142,14 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 	return &blobResp.Blob, nil
 }
 
-func postImages(post *model.Post) (*string, error) {
+func postImages(post *model.Post) error {
 	var uploadImages []ImageItem
 
 	for _, image := range post.Images {
 		blob, err := uploadBlob(&image)
 		if err != nil {
 			logger.Error("Error uploading blob", err)
-			return nil, err
+			return err
 		}
 
 		uploadImages = append(uploadImages, ImageItem{
@@ -182,14 +181,14 @@ func postImages(post *model.Post) (*string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("post request failed: %w", err)
+		return fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 	fmt.Printf("Response Body: %s\n", string(body))
 
@@ -197,16 +196,15 @@ func postImages(post *model.Post) (*string, error) {
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+		return fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
+		return fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
 	}
 
-	postUrl := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
-
-	return &postUrl, nil
+	post.BskyLink = fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
+	return nil
 }
 
 func authenticate() error {
@@ -236,13 +234,13 @@ func authenticate() error {
 	return nil
 }
 
-func postText(text string) (*string, error) {
+func postText(post *model.Post) error {
 	postPayload := PostRequest{
 		Repo:       BskyClient.DID,
 		Collection: "app.bsky.feed.post",
 		Record: PostRecord{
 			Type:      "app.bsky.feed.post",
-			Text:      text,
+			Text:      post.Text,
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
 		},
 	}
@@ -254,17 +252,17 @@ func postText(text string) (*string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("post request failed: %w", err)
+		return fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("post failed: %s", resp.Status)
+		return fmt.Errorf("post failed: %s", resp.Status)
 	}
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 	fmt.Printf("Response Body: %s\n", string(body))
 
@@ -272,10 +270,8 @@ func postText(text string) (*string, error) {
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+		return fmt.Errorf("failed to parse response JSON: %w", err)
 	}
-
-	postUrl := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
-
-	return &postUrl, nil
+	post.BskyLink = fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
+	return nil
 }

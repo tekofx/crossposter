@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -10,15 +12,17 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-func SendToChannel(bot *telego.Bot, post *model.Post) error {
+func SendToChannel(bot *telego.Bot, post *model.Post) (*string, error) {
 
 	var err error
+	var message *telego.Message
+	var messages []telego.Message
 	if post.HasImages {
 		var photos []telego.InputMedia
 		for i, image := range post.Images {
 			file, err := os.Open(image.Filename)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			inputFile := telego.InputFile{
 				File: file,
@@ -33,16 +37,24 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 			photos = append(photos, &media)
 		}
 
-		_, err = bot.SendMediaGroup(context.Background(), &telego.SendMediaGroupParams{
+		messages, err = bot.SendMediaGroup(context.Background(), &telego.SendMediaGroupParams{
 			ChatID: tu.ID(int64((config.Conf.TelegramChannelId))),
 			Media:  photos,
 		})
 
+		message = &messages[0]
+
 	} else {
-		_, err = bot.SendMessage(context.Background(), tu.Message(tu.ID(int64(config.Conf.TelegramChannelId)), post.Text))
+		message, err = bot.SendMessage(context.Background(), tu.Message(tu.ID(int64(config.Conf.TelegramChannelId)), post.Text))
 	}
 
 	post.PublishedOnTelegram = err == nil
 
-	return err
+	var url string
+	if message.Chat.Username == "" {
+		url = fmt.Sprintf("https://t.me/c/%s/%d", strings.Split(message.Chat.ChatID().String(), "100")[1], message.MessageID)
+	} else {
+		url = fmt.Sprintf("https://t.me/c/%s/%d", message.Chat.Username, message.MessageID)
+	}
+	return &url, err
 }

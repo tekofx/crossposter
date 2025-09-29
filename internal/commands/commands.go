@@ -117,18 +117,20 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No se ha enviado contenido para publicar.")
 			return err
 		}
-
 		utils.SendMessageToOwner(ctx, "Publicando post...")
 
-		bskyErr := services.PostToBsky(post)
+		bskyUrl, bskyErr := services.PostToBsky(post)
 		if bskyErr != nil {
 			logger.Error(bskyErr)
 		}
 
-		tgErr := services.SendToChannel(bot, post)
+		fmt.Println(*bskyUrl)
+
+		tgUrl, tgErr := services.SendToChannel(bot, post)
 		if tgErr != nil {
 			logger.Error(tgErr)
 		}
+		fmt.Println(*tgUrl)
 
 		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
 		if err != nil {

@@ -12,6 +12,7 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/utils"
 )
 
 type BlueskyClient struct {
@@ -67,7 +68,17 @@ type PostRecord struct {
 	Embed     *EmbedImages `json:"embed,omitempty"` // Optional: only if embedding images
 }
 
+type PublishResponse struct {
+	Uri string `json:"uri"`
+}
+
 var BskyClient *BlueskyClient
+
+const (
+	createRecordUrl = "https://bsky.social/xrpc/com.atproto.repo.createRecord"
+	uploadBlobUrl   = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
+	loginUrl        = "https://bsky.social/xrpc/com.atproto.server.createSession"
+)
 
 func InitializeBluesky() error {
 	BskyClient = &BlueskyClient{Handle: config.Conf.BskyHandle, Password: config.Conf.BskyAppPassword}
@@ -77,27 +88,27 @@ func InitializeBluesky() error {
 	return nil
 }
 
-func PostToBsky(post *model.Post) error {
+func PostToBsky(post *model.Post) (*string, error) {
 	var err error
+	var postUrl *string
 	if post.HasImages {
-		err = postImages(post)
+		postUrl, err = postImages(post)
 	} else {
-		err = postText(post.Text)
+		postUrl, err = postText(post.Text)
 	}
 
 	post.PublishedOnBsky = err == nil
 
-	return err
+	return postUrl, err
 }
 
 func uploadBlob(image *model.Image) (*Blob, error) {
-	url := "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
 
 	file, err := os.ReadFile(image.Filename)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", url, bytes.NewReader(file))
+	req, err := http.NewRequest("POST", uploadBlobUrl, bytes.NewReader(file))
 	if err != nil {
 		return nil, err
 	}
@@ -132,15 +143,14 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 	return &blobResp.Blob, nil
 }
 
-func postImages(post *model.Post) error {
-	url := "https://bsky.social/xrpc/com.atproto.repo.createRecord"
+func postImages(post *model.Post) (*string, error) {
 	var uploadImages []ImageItem
 
 	for _, image := range post.Images {
 		blob, err := uploadBlob(&image)
 		if err != nil {
 			logger.Error("Error uploading blob", err)
-			return err
+			return nil, err
 		}
 
 		uploadImages = append(uploadImages, ImageItem{
@@ -165,25 +175,41 @@ func postImages(post *model.Post) error {
 	}
 
 	postBody, _ := json.Marshal(postPayload)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(postBody))
+	req, _ := http.NewRequest("POST", createRecordUrl, bytes.NewBuffer(postBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+BskyClient.JWT)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("post request failed: %w", err)
+		return nil, fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
+
+	// Read response body once
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	fmt.Printf("Response Body: %s\n", string(body))
+
+	var publishReponse PublishResponse
+
+	// If response is JSON, parse it
+	if err := json.Unmarshal(body, &publishReponse); err != nil {
+		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 
-	return nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
+	}
+
+	postUrl := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
+
+	return &postUrl, nil
 }
 
 func authenticate() error {
-	loginUrl := "https://bsky.social/xrpc/com.atproto.server.createSession"
 	loginPayload := map[string]string{
 		"identifier": BskyClient.Handle,
 		"password":   BskyClient.Password,
@@ -210,8 +236,7 @@ func authenticate() error {
 	return nil
 }
 
-func postText(text string) error {
-	postUrl := "https://bsky.social/xrpc/com.atproto.repo.createRecord"
+func postText(text string) (*string, error) {
 	postPayload := PostRequest{
 		Repo:       BskyClient.DID,
 		Collection: "app.bsky.feed.post",
@@ -222,18 +247,35 @@ func postText(text string) error {
 		},
 	}
 	postBody, _ := json.Marshal(postPayload)
-	req, _ := http.NewRequest("POST", postUrl, bytes.NewBuffer(postBody))
+	req, _ := http.NewRequest("POST", createRecordUrl, bytes.NewBuffer(postBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+BskyClient.JWT)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("post request failed: %w", err)
+		return nil, fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("post failed: %s", resp.Status)
+		return nil, fmt.Errorf("post failed: %s", resp.Status)
 	}
-	return nil
+	// Read response body once
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	fmt.Printf("Response Body: %s\n", string(body))
+
+	var publishReponse PublishResponse
+
+	// If response is JSON, parse it
+	if err := json.Unmarshal(body, &publishReponse); err != nil {
+		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+	}
+
+	postUrl := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
+
+	return &postUrl, nil
 }

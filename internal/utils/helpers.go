@@ -80,11 +80,14 @@ func GetDocumentAsImage(bot *telego.Bot, fileId string) (*string, error) {
 		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 	extension := strings.Split(file.FilePath, ".")[1]
-	filename := fmt.Sprintf("%s.%s", file.FileID, extension)
+	filename := fmt.Sprintf("./data/images/%s.%s", file.FileUniqueID, extension)
 
 	if !fileExists(filename) {
 		downloadURL := bot.FileDownloadURL(file.FilePath)
-		downloadFile(downloadURL, filename)
+		err := downloadFile(downloadURL, filename)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &filename, nil

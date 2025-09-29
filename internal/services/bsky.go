@@ -118,10 +118,6 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Print the body (as string)
-	fmt.Println("Response Body:")
-	fmt.Println(string(body))
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("upload failed with status: %d", resp.StatusCode)
 	}

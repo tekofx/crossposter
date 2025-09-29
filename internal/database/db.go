@@ -19,7 +19,7 @@ func InitializeDb() {
 		panic("failed to connect database")
 	}
 
-	Database.AutoMigrate(&model.Post{})
+	Database.AutoMigrate(&model.Post{}, &model.Image{})
 }
 
 func DropDatabase() {

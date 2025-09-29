@@ -1,30 +1,30 @@
 package services
 
 import (
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/model"
-	"gorm.io/gorm/clause"
+	"gorm.io/gorm"
 )
 
-func InsertPost(post *model.Post) {
-	database.Database.Create(post)
+func CreatePost() *model.Post {
+	var post model.Post
+	database.Database.Create(&post)
+	return &post
 }
 
-func InsertOrUpdatePost(post *model.Post) {
-	// Replace "id" with your unique key, if different.
-	err := database.Database.
-		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "id"}}, // or another unique field
-			UpdateAll: true,                          // update all fields on conflict
-		}).
-		Create(post).Error
+func UpdatePost(post *model.Post) error {
+	result := database.Database.Save(post)
 
-	if err != nil {
-		// Handle error, e.g. log or return
-		fmt.Println("Error inserting or updating post:", err)
+	if result.Error != nil {
+		fmt.Println("Error updating post:", result)
+		return result.Error
 	}
+
+	return nil
 }
 func PostExistsInDatabase(bskyId string) bool {
 	var post model.Post
@@ -35,17 +35,26 @@ func PostExistsInDatabase(bskyId string) bool {
 	return err == nil
 }
 
-func GetNewestPost() (*model.Post, error) {
+func GetNewestPost() *model.Post {
 	var post model.Post
+
 	err := database.Database.
-		Order("created_at desc").
+		Order("created_at DESC").
+		Preload("Images"). // Load associated images (optional)
 		First(&post).Error
+
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil // No posts in the database
+		}
+		// Log unexpected errors
+		log.Printf("Database error fetching newest post: %v", err)
+		return nil
 	}
-	return &post, nil
+
+	return &post
 }
 
-func RemovePostByID(id uint) error {
-	return database.Database.Delete(&model.Post{}, id).Error
+func RemovePost(post *model.Post) error {
+	return database.Database.Delete(post).Error
 }

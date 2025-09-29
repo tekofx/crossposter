@@ -2,15 +2,15 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Post struct {
-	Id      int `gorm:"primaryKey";autoIncrement:true"`
-	MediaId int // Documents in the same message have the same MediaId
-
+	gorm.Model
 	// Data
 	Text   string
-	Images []string `gorm:"type:text;serializer:json"`
+	Images []Image
 
 	PublishedOnBsky     bool
 	PublishedOnTelegram bool

@@ -25,9 +25,9 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Envía la imagen sin comprimir")
 			return nil
 		}
-		post, _ := services.GetNewestPost()
+		post := services.GetNewestPost()
 		if post == nil {
-			post = &model.Post{}
+			post = services.CreatePost()
 		}
 
 		if update.Message.Document != nil {
@@ -41,7 +41,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 				logger.Error(err)
 				return err
 			}
-			post.Images = append(post.Images, *file)
+			post.Images = append(post.Images, model.Image{Filename: *file})
 			post.HasImages = true
 		} else {
 			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido texto %s", update.Message.Text))
@@ -49,7 +49,10 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			post.HasText = true
 		}
 
-		services.InsertOrUpdatePost(post)
+		err := services.UpdatePost(post)
+		if err != nil {
+			return err
+		}
 		return nil
 
 	}, utils.FromBotOwner())

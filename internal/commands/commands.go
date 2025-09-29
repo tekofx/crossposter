@@ -34,15 +34,15 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 
 func deleteNewestPostCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post, err := services.GetNewestPost()
+		post := services.GetNewestPost()
 
 		if post == nil {
-			_, err = utils.SendMessageToOwner(ctx, post.Text)
+			_, err := utils.SendMessageToOwner(ctx, post.Text)
 			logger.Error(err)
 			return err
 		}
 
-		err = services.RemovePostByID(uint(post.Id))
+		err := services.RemovePost(post)
 		if post == nil {
 			_, err = utils.SendMessageToOwner(ctx, post.Text)
 			logger.Error(err)
@@ -60,19 +60,18 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-
-		post, err := services.GetNewestPost()
+		post := services.GetNewestPost()
 		if post == nil {
 			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
-		_, err = utils.SendMessageToOwner(ctx, "Obteniendo post...")
+		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post...")
 		if err != nil {
 			logger.Error(err)
 			return err
 		}
 		if post.HasImages {
-			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post.Images, post.Text)
+			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post)
 			if err != nil {
 				logger.Error(err)
 				return err
@@ -113,10 +112,10 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post, err := services.GetNewestPost()
+		post := services.GetNewestPost()
 		if post == nil {
-			_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No se ha enviado contenido para publicar.")
-			return nil
+			_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No se ha enviado contenido para publicar.")
+			return err
 		}
 
 		utils.SendMessageToOwner(ctx, "Publicando post...")
@@ -138,7 +137,7 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			logger.Error(tgErr)
 		}
 
-		_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
+		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
 		if err != nil {
 			logger.Error(err)
 			return err

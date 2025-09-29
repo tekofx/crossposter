@@ -10,6 +10,7 @@ import (
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/model"
 
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -39,12 +40,12 @@ func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
 	return msg, nil
 }
 
-func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, filenames []string, text string) error {
+func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) error {
 	var media []telego.InputMedia
 
-	for i, filename := range filenames {
+	for i, image := range post.Images {
 
-		downloadedImage, err := os.Open(filename)
+		downloadedImage, err := os.Open(image.Filename)
 		if err != nil {
 			logger.Error("Error opening file:", err)
 			return err
@@ -60,7 +61,7 @@ func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, filenames []string, 
 			Media: inputFile,
 		}
 		if i == 0 {
-			photo.Caption = text
+			photo.Caption = post.Text
 		}
 		media = append(media, photo)
 	}

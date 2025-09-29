@@ -17,7 +17,7 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 		var photos []telego.InputMedia
 
 		for i, image := range post.Images {
-			file, err := os.Open(image)
+			file, err := os.Open(image.Filename)
 			if err != nil {
 				return err
 			}

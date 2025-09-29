@@ -80,7 +80,7 @@ func InitializeBluesky() error {
 func PostToBsky(post *model.Post) error {
 	var err error
 	if len(post.Images) > 0 {
-		err = postImages(post.Images, post.Text)
+		err = postImages(post)
 	} else {
 		err = postText(post.Text)
 	}
@@ -123,12 +123,12 @@ func uploadBlob(filename string) (*Blob, error) {
 	return &blobResp.Blob, nil
 }
 
-func postImages(images []string, text string) error {
+func postImages(post *model.Post) error {
 	url := "https://bsky.social/xrpc/com.atproto.repo.createRecord"
 	var uploadImages []ImageItem
 
-	for _, image := range images {
-		blob, err := uploadBlob(image)
+	for _, image := range post.Images {
+		blob, err := uploadBlob(image.Filename)
 		if err != nil {
 			logger.Error("Error uploading blob", err)
 			return err
@@ -149,7 +149,7 @@ func postImages(images []string, text string) error {
 		Collection: "app.bsky.feed.post",
 		Record: PostRecord{
 			Type:      "app.bsky.feed.post",
-			Text:      text,
+			Text:      post.Text,
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
 			Embed:     &embed,
 		},

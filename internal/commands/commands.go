@@ -14,7 +14,7 @@ import (
 )
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
-	postCommand(bh)
+	postCommand(bh, bot)
 	helpCommand(bh, bot)
 	queueCommand(bh, bot)
 	deleteNewestPostCommand(bh)
@@ -111,7 +111,7 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 	}, th.CommandEqual("help"))
 }
 
-func postCommand(bh *th.BotHandler) {
+func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		post, err := services.GetNewestPost()
 		if post == nil {
@@ -120,19 +120,24 @@ func postCommand(bh *th.BotHandler) {
 		}
 
 		utils.SendMessageToOwner(ctx, "Publicando post...")
-		reply := "Posteado\n"
-		reply += "✅ Bsky\n"
-		reply += "❌ Twitter\n"
-		reply += "✅ Telegram\n"
-		fmt.Println(post.Id)
+		reply := "Resultado\n"
 
-		bskyErr := services.PostToBsky(post)
-		if bskyErr == nil {
-			reply += "✅ Bsky"
+		// bskyErr := services.PostToBsky(post)
+		// if bskyErr == nil {
+		// 	reply += "✅ Bsky"
+		// } else {
+		// 	reply += "❌ Bsky"
+		// 	logger.Error(bskyErr)
+		// }
+
+		tgErr := services.SendToChannel(bot, post)
+		if tgErr == nil {
+			reply += "✅ Telegram Channel"
 		} else {
-			logger.Error(bskyErr)
-			return err
+			reply += "❌ Telegram Channel"
+			logger.Error(tgErr)
 		}
+
 		_, err = utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
 		if err != nil {
 			logger.Error(err)

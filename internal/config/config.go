@@ -21,6 +21,7 @@ type Config struct {
 	TelegramOwner     int
 
 	// Twitter
+	TwitterUsername       string
 	TwitterConsumerKey    string
 	TwitterConsumerSecret string
 	TwitterAccessToken    string
@@ -95,6 +96,7 @@ func GetConfig() *Config {
 		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER"),
 
 		// Twitter
+		TwitterUsername:       getStringEnvVariable("TWITTER_USERNAME"),
 		TwitterConsumerKey:    getStringEnvVariable("TWITTER_CONSUMER_KEY"),
 		TwitterConsumerSecret: getStringEnvVariable("TWITTER_CONSUMER_SECRET"),
 		TwitterAccessToken:    getStringEnvVariable("TWITTER_ACCESS_TOKEN"),

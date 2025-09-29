@@ -143,7 +143,7 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			return err
 		}
 
-		// err = services.RemovePostByID(uint(post.Id))
+		// err = services.RemovePost(post)
 		// if err != nil {
 		// 	logger.Error(err)
 		// 	return err

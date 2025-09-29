@@ -41,7 +41,14 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 				logger.Error(err)
 				return err
 			}
-			post.Images = append(post.Images, model.Image{Filename: *file})
+
+			post.Images = append(post.Images,
+				model.Image{
+					Filename: *file,
+					MimeType: update.Message.Document.MimeType,
+					FileSize: update.Message.Document.FileSize,
+				},
+			)
 			post.HasImages = true
 		} else {
 			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido texto %s", update.Message.Text))

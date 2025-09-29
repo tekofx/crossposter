@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/tekofx/crossposter/internal/config"
@@ -79,7 +78,7 @@ func InitializeBluesky() error {
 
 func PostToBsky(post *model.Post) error {
 	var err error
-	if len(post.Images) > 0 {
+	if post.HasImages {
 		err = postImages(post)
 	} else {
 		err = postText(post.Text)
@@ -88,11 +87,10 @@ func PostToBsky(post *model.Post) error {
 	return err
 }
 
-func uploadBlob(filename string) (*Blob, error) {
+func uploadBlob(image *model.Image) (*Blob, error) {
 	url := "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
-	mimeType := "image/" + strings.Split(filename, ".")[1]
 
-	file, err := os.ReadFile(filename)
+	file, err := os.ReadFile(image.Filename)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +100,7 @@ func uploadBlob(filename string) (*Blob, error) {
 	}
 
 	req.Header.Set("Authorization", "Bearer "+BskyClient.JWT)
-	req.Header.Set("Content-Type", mimeType)
+	req.Header.Set("Content-Type", image.MimeType)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -128,7 +126,7 @@ func postImages(post *model.Post) error {
 	var uploadImages []ImageItem
 
 	for _, image := range post.Images {
-		blob, err := uploadBlob(image.Filename)
+		blob, err := uploadBlob(&image)
 		if err != nil {
 			logger.Error("Error uploading blob", err)
 			return err

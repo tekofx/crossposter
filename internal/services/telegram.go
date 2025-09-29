@@ -11,11 +11,8 @@ import (
 )
 
 func SendToChannel(bot *telego.Bot, post *model.Post) error {
-
 	if post.HasImages {
-
 		var photos []telego.InputMedia
-
 		for i, image := range post.Images {
 			file, err := os.Open(image.Filename)
 			if err != nil {
@@ -45,9 +42,6 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 		if err != nil {
 			return err
 		}
-
 	}
-
 	return nil
-
 }

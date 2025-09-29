@@ -9,6 +9,7 @@ import (
 	"github.com/michimani/gotwi/tweet/managetweet/types"
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/model"
 )
 
 var twitterClient *gotwi.Client
@@ -28,16 +29,29 @@ func InitializeTwitter() {
 	}
 }
 
-func PostToTwitter(text string) error {
+func PostToTwitter(post *model.Post) (*string, error) {
+	var err error
+	var url *string
+
+	if post.HasImages {
+
+	} else {
+		url, err = postTextToTwitter("uwu")
+	}
+	post.PublishedOnTwitter = err == nil
+	return url, nil
+}
+
+func postTextToTwitter(text string) (*string, error) {
 	p := &types.CreateInput{
-		Text: gotwi.String("Uwu"),
+		Text: gotwi.String(text),
 	}
 	res, err := managetweet.Create(context.Background(), twitterClient, p)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return nil, err
 	}
-	fmt.Printf("[%s] %s\n", gotwi.StringValue(res.Data.ID), gotwi.StringValue(res.Data.Text))
+	postUrl := fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, *res.Data.ID)
 
-	return nil
+	return &postUrl, nil
 }

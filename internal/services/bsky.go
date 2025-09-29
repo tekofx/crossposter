@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -84,6 +85,8 @@ func PostToBsky(post *model.Post) error {
 		err = postText(post.Text)
 	}
 
+	post.PublishedOnBsky = err == nil
+
 	return err
 }
 
@@ -109,13 +112,25 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 	}
 	defer resp.Body.Close()
 
+	// Read the body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Print the body (as string)
+	fmt.Println("Response Body:")
+	fmt.Println(string(body))
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("upload failed with status: %d", resp.StatusCode)
 	}
 
 	var blobResp BlobResponse
-	if err := json.NewDecoder(resp.Body).Decode(&blobResp); err != nil {
-		return nil, err
+
+	// If response is JSON, parse it
+	if err := json.Unmarshal(body, &blobResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 
 	return &blobResp.Blob, nil

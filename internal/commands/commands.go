@@ -119,25 +119,18 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 		}
 
 		utils.SendMessageToOwner(ctx, "Publicando post...")
-		reply := "Resultado\n"
 
 		bskyErr := services.PostToBsky(post)
-		if bskyErr == nil {
-			reply += "✅ Bluesky\n"
-		} else {
-			reply += "❌ Bluesky\n"
+		if bskyErr != nil {
 			logger.Error(bskyErr)
 		}
 
 		tgErr := services.SendToChannel(bot, post)
-		if tgErr == nil {
-			reply += "✅ Telegram Channel\n"
-		} else {
-			reply += "❌ Telegram Channel\n"
+		if tgErr != nil {
 			logger.Error(tgErr)
 		}
 
-		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), reply)
+		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
 		if err != nil {
 			logger.Error(err)
 			return err

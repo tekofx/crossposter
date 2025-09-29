@@ -11,6 +11,8 @@ import (
 )
 
 func SendToChannel(bot *telego.Bot, post *model.Post) error {
+
+	var err error
 	if post.HasImages {
 		var photos []telego.InputMedia
 		for i, image := range post.Images {
@@ -31,17 +33,16 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 			photos = append(photos, &media)
 		}
 
-		_, err := bot.SendMediaGroup(context.Background(), &telego.SendMediaGroupParams{
+		_, err = bot.SendMediaGroup(context.Background(), &telego.SendMediaGroupParams{
 			ChatID: tu.ID(int64((config.Conf.TelegramChannelId))),
 			Media:  photos,
 		})
-		return err
 
 	} else {
-		_, err := bot.SendMessage(context.Background(), tu.Message(tu.ID(int64(config.Conf.TelegramChannelId)), post.Text))
-		if err != nil {
-			return err
-		}
+		_, err = bot.SendMessage(context.Background(), tu.Message(tu.ID(int64(config.Conf.TelegramChannelId)), post.Text))
 	}
-	return nil
+
+	post.PublishedOnTelegram = err == nil
+
+	return err
 }

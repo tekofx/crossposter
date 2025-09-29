@@ -1,0 +1,10 @@
+services:
+  crossposter:
+    container_name: crossposter
+    #image: ghcr.io/tekofx/crossposter:latest
+    build: .
+
+    env_file: .env
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

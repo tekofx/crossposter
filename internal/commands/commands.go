@@ -119,22 +119,20 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 		}
 		utils.SendMessageToOwner(ctx, "Publicando post...")
 
-		bskyUrl, bskyErr := services.PostToBsky(post)
+		bskyErr := services.PostToBsky(post)
 		if bskyErr != nil {
 			logger.Error(bskyErr)
 		}
 
-		tgUrl, tgErr := services.SendToChannel(bot, post)
+		tgErr := services.SendToChannel(bot, post)
 		if tgErr != nil {
 			logger.Error(tgErr)
 		}
 
-		twitterUrl, twitterErr := services.PostToTwitter(post)
+		twitterErr := services.PostToTwitter(post)
 		if twitterErr != nil {
 			logger.Error(twitterErr)
 		}
-
-		fmt.Println(*bskyUrl, *tgUrl, *twitterUrl)
 
 		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
 		if err != nil {

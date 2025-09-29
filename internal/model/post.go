@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -16,6 +17,10 @@ type Post struct {
 	PublishedOnTelegram bool
 	PublishedOnTwitter  bool
 
+	BskyLink     string
+	TelegramLink string
+	TwitterLink  string
+
 	// Meta
 	CreatedAt time.Time `gorm:"type:DATE;"`
 	HasText   bool
@@ -23,24 +28,16 @@ type Post struct {
 }
 
 func (post *Post) Message() string {
-	msg := "Resultado\n"
-	if post.PublishedOnBsky {
-		msg += "✅ Bluesky\n"
-	} else {
-		msg += "❌ Bluesky\n"
+	format := func(ok bool, service string, url string) string {
+		if ok {
+			return fmt.Sprintf("✅ [%s](%s)", service, url)
+		}
+		return fmt.Sprintf("❌ %s", service)
 	}
 
-	if post.PublishedOnTelegram {
-		msg += "✅ Telegram Channel\n"
-	} else {
-		msg += "❌ Telegram Channel\n"
-	}
-
-	if post.PublishedOnTwitter {
-		msg += "✅ Twitter\n"
-	} else {
-		msg += "❌ Twitter\n"
-	}
-
-	return msg
+	return fmt.Sprintf("Resultado\n%s\n%s\n%s",
+		format(post.PublishedOnBsky, "Bluesky", post.BskyLink),
+		format(post.PublishedOnTelegram, "Telegram", post.TelegramLink),
+		format(post.PublishedOnTwitter, "Twitter", post.TwitterLink),
+	)
 }

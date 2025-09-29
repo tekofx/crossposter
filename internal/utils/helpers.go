@@ -20,7 +20,7 @@ func SendMessage(ctx *th.Context, chatId int64, text string) (*telego.Message, e
 	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		tu.ID(chatId),
 		text,
-	))
+	).WithParseMode(telego.ModeMarkdownV2))
 
 	if err != nil {
 		return nil, err

@@ -29,29 +29,27 @@ func InitializeTwitter() {
 	}
 }
 
-func PostToTwitter(post *model.Post) (*string, error) {
+func PostToTwitter(post *model.Post) error {
 	var err error
-	var url *string
 
 	if post.HasImages {
 
 	} else {
-		url, err = postTextToTwitter("uwu")
+		err = postTextToTwitter(post)
 	}
 	post.PublishedOnTwitter = err == nil
-	return url, nil
+	return nil
 }
 
-func postTextToTwitter(text string) (*string, error) {
+func postTextToTwitter(post *model.Post) error {
 	p := &types.CreateInput{
-		Text: gotwi.String(text),
+		Text: gotwi.String(post.Text),
 	}
 	res, err := managetweet.Create(context.Background(), twitterClient, p)
 	if err != nil {
 		logger.Error(err)
-		return nil, err
+		return err
 	}
-	postUrl := fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, *res.Data.ID)
-
-	return &postUrl, nil
+	post.TwitterLink = fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, *res.Data.ID)
+	return nil
 }

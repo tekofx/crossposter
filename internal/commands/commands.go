@@ -90,9 +90,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
-		commands, _ := bot.GetMyCommands(context.Background(), &telego.GetMyCommandsParams{
-			Scope: tu.ScopeAllPrivateChats(),
-		})
+		commands, _ := bot.GetMyCommands(context.Background(), &telego.GetMyCommandsParams{})
 		msg := `Proceso de publicación:
 		1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)
 		2. Usa el comando /post para publicar`

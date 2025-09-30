@@ -26,7 +26,7 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 			{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
 			{Command: "borrar", Description: "Elimina el post en cola"},
 		},
-		Scope: tu.ScopeAllPrivateChats(),
+		Scope: tu.ScopeChat(tu.ID(int64(config.Conf.TelegramOwner))),
 	}
 	bot.SetMyCommands(context.Background(), &PrivateChatCommands)
 
@@ -95,14 +95,14 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 		})
 		msg := `Proceso de publicación:
 		1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)
-		2. Usa el comando /post para publicar.`
+		2. Usa el comando /post para publicar`
 
 		msg += "\nComandos\n"
 
 		for _, command := range commands {
 			msg += fmt.Sprintf("- /%s: %s\n", command.Command, command.Description)
 		}
-		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), msg)
+		_, err := utils.SendMessageToOwner(ctx, msg)
 		if err != nil {
 			logger.Fatal(err)
 		}

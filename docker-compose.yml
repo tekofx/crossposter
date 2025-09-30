@@ -1,8 +1,7 @@
 services:
   crossposter:
     container_name: crossposter
-    #image: ghcr.io/tekofx/crossposter:latest
-    build: .
+    image: ghcr.io/tekofx/crossposter:latest
 
     env_file: .env
     volumes:

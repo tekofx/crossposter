@@ -75,7 +75,7 @@ func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) er
 	return err
 }
 
-func GetDocumentAsImage(bot *telego.Bot, fileId string) (*string, error) {
+func DownloadImage(bot *telego.Bot, fileId string) (*string, error) {
 	file, err := bot.GetFile(context.Background(), &telego.GetFileParams{FileID: fileId})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file info: %w", err)

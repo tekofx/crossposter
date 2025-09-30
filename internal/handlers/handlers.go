@@ -21,8 +21,8 @@ func AddHandlers(bh *th.BotHandler, bot *telego.Bot) {
 func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		if len(update.Message.Photo) > 0 {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Envía la imagen sin comprimir")
+		if update.Message.Document != nil {
+			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Envía el archivo como imagen")
 			return nil
 		}
 		post := services.GetNewestPost()
@@ -30,13 +30,10 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			post = services.CreatePost()
 		}
 
-		if update.Message.Document != nil {
-			if !utils.IsImageExtension(update.Message.Document.FileName) {
-				utils.SendMessageToOwner(ctx, "No se admite este archivo. Envía una imagen.")
-				return nil
-			}
-			utils.SendMessageToOwner(ctx, fmt.Sprintf("Recibido archivo %s", update.Message.Document.FileName))
-			file, err := utils.GetDocumentAsImage(bot, update.Message.Document.FileID)
+		if len(update.Message.Photo) > 0 {
+			photoLen := len(update.Message.Photo)
+			utils.SendMessageToOwner(ctx, "Recibida imagen")
+			file, err := utils.DownloadImage(bot, update.Message.Photo[photoLen-1].FileID)
 			if err != nil {
 				logger.Error(err)
 				return err
@@ -45,8 +42,8 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			post.Images = append(post.Images,
 				model.Image{
 					Filename: *file,
-					MimeType: update.Message.Document.MimeType,
-					FileSize: update.Message.Document.FileSize,
+					MimeType: "image/jpeg",
+					FileSize: update.Message.Photo[photoLen-1].FileSize,
 				},
 			)
 			post.HasImages = true

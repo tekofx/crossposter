@@ -6,6 +6,6 @@ type Image struct {
 	gorm.Model
 	Filename string
 	MimeType string
-	FileSize int64
+	FileSize int
 	PostID   uint
 }

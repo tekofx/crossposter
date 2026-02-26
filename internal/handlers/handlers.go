@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/mymmrac/telego"
-	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
@@ -22,7 +21,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		if update.Message.Document != nil {
-			utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "Envía el archivo como imagen")
+			utils.SendMessageToOwner(ctx, "Envía el archivo como imagen")
 			return nil
 		}
 		post := services.GetNewestPost()

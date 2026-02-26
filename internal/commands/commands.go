@@ -11,6 +11,7 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/tasks"
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
@@ -107,7 +108,7 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		var msg strings.Builder
 		msg.WriteString(`Proceso de publicación:
-		1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)
+		1. Envia el texto o las imágenes (con texto opcional)
 		2. Usa el comando /post para publicar
 		`)
 		msg.WriteString("\nComandos\n")
@@ -128,31 +129,32 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		post := services.GetNewestPost()
 		if post == nil {
-			_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), "No se ha enviado contenido para publicar.")
+			_, err := utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
 			return err
 		}
 		utils.SendMessageToOwner(ctx, "Publicando post...")
 
 		// bskyErr := services.PostToBsky(post)
 		// if bskyErr != nil {
-		// 	logger.Error(bskyErr)
+		// 	logger.Error("Bsky", bskyErr)
 		// }
 
 		// tgErr := services.SendToChannel(bot, post)
 		// if tgErr != nil {
-		// 	logger.Error(tgErr)
+		// 	logger.Error("Telegram", tgErr)
+		// }
+		go tasks.ScheduleToTelegram(bot)
+
+		// twitterErr := services.PostToTwitter(post)
+		// if twitterErr != nil {
+		// 	logger.Error("Twitter", twitterErr)
 		// }
 
-		twitterErr := services.PostToTwitter(post)
-		if twitterErr != nil {
-			logger.Error(twitterErr)
-		}
-
-		_, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
-		if err != nil {
-			logger.Error(err)
-			return err
-		}
+		// _, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
+		// if err != nil {
+		// 	logger.Error(err)
+		// 	return err
+		// }
 
 		// err = services.RemovePost(post)
 		// if err != nil {

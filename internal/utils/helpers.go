@@ -16,11 +16,11 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func SendMessage(ctx *th.Context, chatId int64, text string) (*telego.Message, error) {
+func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
 	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
-		tu.ID(chatId),
+		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
-	).WithParseMode(telego.ModeMarkdownV2))
+	))
 
 	if err != nil {
 		return nil, err
@@ -28,8 +28,8 @@ func SendMessage(ctx *th.Context, chatId int64, text string) (*telego.Message, e
 	return msg, nil
 }
 
-func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
-	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
+func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, error) {
+	msg, err := bot.SendMessage(context.Background(), tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
 	))

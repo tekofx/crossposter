@@ -39,7 +39,7 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 func startCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
-		_, err := utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s!", update.Message.From.Username))
+		_, err := utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s! Usa /help para obtener info sobre mis comandos", update.Message.From.Username))
 		if err != nil {
 			logger.Fatal(err)
 		}

@@ -12,7 +12,7 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-func SendToChannel(bot *telego.Bot, post *model.Post) error {
+func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*model.Post, error) {
 
 	var err error
 	var message *telego.Message
@@ -22,7 +22,7 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 		for i, image := range post.Images {
 			file, err := os.Open(image.Filename)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			inputFile := telego.InputFile{
 				File: file,
@@ -41,6 +41,9 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 			ChatID: tu.ID(int64((config.Conf.TelegramChannelId))),
 			Media:  photos,
 		})
+		if err != nil {
+			return nil, err
+		}
 
 		message = &messages[0]
 
@@ -55,5 +58,5 @@ func SendToChannel(bot *telego.Bot, post *model.Post) error {
 	} else {
 		post.TelegramLink = fmt.Sprintf("https://t.me/c/%s/%d", message.Chat.Username, message.MessageID)
 	}
-	return err
+	return post, err
 }

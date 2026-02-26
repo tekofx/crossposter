@@ -81,7 +81,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
-		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post...")
+		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post")
 		if err != nil {
 			logger.Error(err)
 			return err
@@ -132,18 +132,24 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			_, err := utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
 			return err
 		}
-		utils.SendMessageToOwner(ctx, "Publicando post...")
+		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		// bskyErr := services.PostToBsky(post)
+		// postLink, bskyErr := services.PostToBsky(post)
 		// if bskyErr != nil {
 		// 	logger.Error("Bsky", bskyErr)
+		// }
+
+		// if postLink != nil {
+		// 	utils.SendMessageToOwner(ctx, fmt.Sprintf("Publicado en [Bluesky](%s)", *postLink))
 		// }
 
 		// tgErr := services.SendToChannel(bot, post)
 		// if tgErr != nil {
 		// 	logger.Error("Telegram", tgErr)
 		// }
+		go tasks.ScheduleToBsky(bot)
 		go tasks.ScheduleToTelegram(bot)
+		go tasks.ScheduleToTwitter(bot)
 
 		// twitterErr := services.PostToTwitter(post)
 		// if twitterErr != nil {

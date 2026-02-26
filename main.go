@@ -18,7 +18,10 @@ func main() {
 	//services.InitializeTelegram()
 	database.InitializeDb()
 
-	services.InitializeBluesky()
+	err := services.InitializeBluesky()
+	if err != nil {
+		logger.Fatal("Bluesky", err)
+	}
 	services.InitializeTwitter()
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 

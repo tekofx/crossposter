@@ -12,7 +12,7 @@ import (
 	"github.com/tekofx/crossposter/internal/model"
 )
 
-func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*model.Post, error) {
+func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, error) {
 
 	var err error
 	var message *telego.Message
@@ -58,5 +58,5 @@ func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*model.Post, erro
 	} else {
 		post.TelegramLink = fmt.Sprintf("https://t.me/c/%s/%d", message.Chat.Username, message.MessageID)
 	}
-	return post, err
+	return &post.TelegramLink, err
 }

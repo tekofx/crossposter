@@ -88,17 +88,16 @@ func InitializeBluesky() error {
 	return nil
 }
 
-func PostToBsky(post *model.Post) error {
+func PostToBsky(post *model.Post) (*string, error) {
 	var err error
+	var postLink *string
 	if post.HasImages {
-		err = postImages(post)
+		postLink, err = postImages(post)
 	} else {
-		err = postText(post)
+		postLink, err = postText(post)
 	}
 
-	post.PublishedOnBsky = err == nil
-
-	return err
+	return postLink, err
 }
 
 func uploadBlob(image *model.Image) (*Blob, error) {
@@ -142,14 +141,14 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 	return &blobResp.Blob, nil
 }
 
-func postImages(post *model.Post) error {
+func postImages(post *model.Post) (*string, error) {
 	var uploadImages []ImageItem
 
 	for _, image := range post.Images {
 		blob, err := uploadBlob(&image)
 		if err != nil {
 			logger.Error("Error uploading blob", err)
-			return err
+			return nil, err
 		}
 
 		uploadImages = append(uploadImages, ImageItem{
@@ -181,30 +180,30 @@ func postImages(post *model.Post) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("post request failed: %w", err)
+		return nil, fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	fmt.Printf("Response Body: %s\n", string(body))
 
 	var publishReponse PublishResponse
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return fmt.Errorf("failed to parse response JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
+		return nil, fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
 	}
 
-	post.BskyLink = fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
-	return nil
+	postLink := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
+
+	return &postLink, nil
 }
 
 func authenticate() error {
@@ -234,7 +233,7 @@ func authenticate() error {
 	return nil
 }
 
-func postText(post *model.Post) error {
+func postText(post *model.Post) (*string, error) {
 	postPayload := PostRequest{
 		Repo:       BskyClient.DID,
 		Collection: "app.bsky.feed.post",
@@ -252,26 +251,25 @@ func postText(post *model.Post) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("post request failed: %w", err)
+		return nil, fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("post failed: %s", resp.Status)
+		return nil, fmt.Errorf("post failed: %s", resp.Status)
 	}
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	fmt.Printf("Response Body: %s\n", string(body))
 
 	var publishReponse PublishResponse
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return fmt.Errorf("failed to parse response JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 	post.BskyLink = fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
-	return nil
+	return &post.BskyLink, nil
 }

@@ -34,38 +34,39 @@ func InitializeTwitter() {
 	}
 }
 
-func PostToTwitter(post *model.Post) error {
+func PostToTwitter(post *model.Post) (*string, error) {
 	var err error
+	var postLink *string
 
 	if post.HasImages {
-		err = postImagesToTwitter(post)
+		postLink, err = postImagesToTwitter(post)
 	} else {
-		err = postTextToTwitter(post)
+		postLink, err = postTextToTwitter(post)
 	}
 	post.PublishedOnTwitter = err == nil
-	return nil
+	return postLink, nil
 }
 
-func postTextToTwitter(post *model.Post) error {
+func postTextToTwitter(post *model.Post) (*string, error) {
 	p := &mtTypes.CreateInput{
 		Text: gotwi.String(post.Text),
 	}
 	res, err := managetweet.Create(context.Background(), twitterClient, p)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return nil, err
 	}
 	post.TwitterLink = fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, *res.Data.ID)
-	return nil
+	return &post.TwitterLink, nil
 }
 
-func postImagesToTwitter(post *model.Post) error {
+func postImagesToTwitter(post *model.Post) (*string, error) {
 
 	var mediaIds []string
 	for _, image := range post.Images {
 		fileBytes, err := os.ReadFile(image.Filename)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		res, err := initialize(twitterClient, &mediaTypes.InitializeInput{
 			MediaType:     mediaTypes.MediaType(image.MimeType),
@@ -80,22 +81,22 @@ func postImagesToTwitter(post *model.Post) error {
 			SegmentIndex: 0,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		_, err = finalizeInput(twitterClient, &types.FinalizeInput{
 			MediaID: res.Data.MediaID,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	postedID, err := postTweetWithMedia(twitterClient, post.Text, mediaIds)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	post.TwitterLink = fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, postedID)
-	return nil
+	return &post.TwitterLink, nil
 }
 func initialize(c *gotwi.Client, p *types.InitializeInput) (*types.InitializeOutput, error) {
 	res, err := upload.Initialize(context.Background(), c, p)

@@ -25,6 +25,7 @@ type Post struct {
 	CreatedAt time.Time `gorm:"type:DATE;"`
 	HasText   bool
 	HasImages bool
+	Scheduled bool
 }
 
 func (post *Post) Message() string {

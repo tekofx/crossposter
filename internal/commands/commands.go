@@ -132,41 +132,17 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			_, err := utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
 			return err
 		}
+
+		if post.Scheduled {
+			utils.SendMessageToOwner(ctx, "El post ya está programado")
+			return nil
+		}
+
 		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		// postLink, bskyErr := services.PostToBsky(post)
-		// if bskyErr != nil {
-		// 	logger.Error("Bsky", bskyErr)
-		// }
-
-		// if postLink != nil {
-		// 	utils.SendMessageToOwner(ctx, fmt.Sprintf("Publicado en [Bluesky](%s)", *postLink))
-		// }
-
-		// tgErr := services.SendToChannel(bot, post)
-		// if tgErr != nil {
-		// 	logger.Error("Telegram", tgErr)
-		// }
-		go tasks.ScheduleToBsky(bot)
-		go tasks.ScheduleToTelegram(bot)
-		go tasks.ScheduleToTwitter(bot)
-
-		// twitterErr := services.PostToTwitter(post)
-		// if twitterErr != nil {
-		// 	logger.Error("Twitter", twitterErr)
-		// }
-
-		// _, err := utils.SendMessage(ctx, int64(config.Conf.TelegramOwner), post.Message())
-		// if err != nil {
-		// 	logger.Error(err)
-		// 	return err
-		// }
-
-		// err = services.RemovePost(post)
-		// if err != nil {
-		// 	logger.Error(err)
-		// 	return err
-		// }
+		go tasks.ScheduleToBsky(bot, post)
+		go tasks.ScheduleToTelegram(bot, post)
+		go tasks.ScheduleToTwitter(bot, post)
 		return nil
 	}, th.CommandEqual("post"))
 }

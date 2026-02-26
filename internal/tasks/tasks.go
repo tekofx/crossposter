@@ -6,6 +6,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/utils"
 )
@@ -21,12 +22,14 @@ func waitUntilHour(hour int, minute int) {
 	time.Sleep(time.Until(target))
 }
 
-func ScheduleToTelegram(bot *telego.Bot) {
+func ScheduleToTelegram(bot *telego.Bot, post *model.Post) {
+	post.Scheduled = true
+	services.UpdatePost(post)
 	//waitUntilHour(16, 00)
 	logger.Log("Telegram Post Scheduled")
-	waitUntilHour(12, 30)
 
-	post := services.GetNewestPost()
+	waitUntilHour(12, 58)
+
 	postLink, tgErr := services.PostToTelegramChannel(bot, post)
 	if tgErr != nil {
 		logger.Error("Telegram", tgErr)
@@ -39,13 +42,18 @@ func ScheduleToTelegram(bot *telego.Bot) {
 		logger.Error("Telegram Scheduled Post", "Could not send post confirmation", err)
 		return
 	}
+	checkToRemovePost(bot)
+
 }
 
-func ScheduleToBsky(bot *telego.Bot) {
-	//waitUntilHour(20, 00)
-	waitUntilHour(11, 58)
+func ScheduleToBsky(bot *telego.Bot, post *model.Post) {
+	logger.Log("Bsky Post Scheduled")
 
-	post := services.GetNewestPost()
+	post.Scheduled = true
+	services.UpdatePost(post)
+	//waitUntilHour(20, 00)
+	waitUntilHour(13, 01)
+
 	postLink, err := services.PostToBsky(post)
 	if err != nil {
 		logger.Error("Bluesky Scheduled Post", err)
@@ -58,13 +66,17 @@ func ScheduleToBsky(bot *telego.Bot) {
 		logger.Error("Bluesky", "Could not send post confirmation", err)
 		return
 	}
+	checkToRemovePost(bot)
 }
 
-func ScheduleToTwitter(bot *telego.Bot) {
-	//waitUntilHour(20, 00)
-	waitUntilHour(11, 58)
+func ScheduleToTwitter(bot *telego.Bot, post *model.Post) {
+	logger.Log("Twitter Post Scheduled")
 
-	post := services.GetNewestPost()
+	post.Scheduled = true
+	services.UpdatePost(post)
+	//waitUntilHour(20, 00)
+	waitUntilHour(13, 01)
+
 	postLink, err := services.PostToTwitter(post)
 	if err != nil {
 		logger.Error("Twitter Scheduled Post", err)
@@ -77,6 +89,8 @@ func ScheduleToTwitter(bot *telego.Bot) {
 		logger.Error("Twitter", "Could not send post confirmation", err)
 		return
 	}
+	checkToRemovePost(bot)
+
 }
 
 // Checks if the post on database have been posted. If not, schedule it
@@ -88,15 +102,32 @@ func CheckUnpostedPost(bot *telego.Bot) {
 	}
 
 	if !post.PublishedOnBsky {
-		go ScheduleToBsky(bot)
+		go ScheduleToBsky(bot, post)
 	}
 
 	if !post.PublishedOnTelegram {
-		go ScheduleToTelegram(bot)
+		go ScheduleToTelegram(bot, post)
 	}
 
 	if !post.PublishedOnTwitter {
-		go ScheduleToTwitter(bot)
+		go ScheduleToTwitter(bot, post)
+	}
+
+}
+
+// If post have been posted to all socials, remove it from database
+func checkToRemovePost(bot *telego.Bot) {
+	post := services.GetNewestPost()
+
+	if post.PublishedOnBsky && post.PublishedOnTelegram && post.PublishedOnTwitter {
+		_, err := utils.SendMessageToOwnerUsingBot(bot, "Se ha publicado el post en todas las redes sociales. Eliminado de la cola.")
+		if err != nil {
+			logger.Error("checkToRemovePost", "Could not send message to owner", err)
+		}
+		err = services.RemovePost(post)
+		if err != nil {
+			logger.Error("checkToRemovePost", "Could not remove post from database", err)
+		}
 	}
 
 }

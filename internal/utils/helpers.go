@@ -20,7 +20,7 @@ func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
 	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
-	))
+	).WithParseMode(telego.ModeMarkdownV2))
 
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, 
 	msg, err := bot.SendMessage(context.Background(), tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
-	))
+	).WithParseMode(telego.ModeMarkdownV2))
 
 	if err != nil {
 		return nil, err

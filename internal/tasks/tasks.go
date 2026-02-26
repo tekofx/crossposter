@@ -23,7 +23,8 @@ func waitUntilHour(hour int, minute int) {
 
 func ScheduleToTelegram(bot *telego.Bot) {
 	//waitUntilHour(16, 00)
-	waitUntilHour(11, 56)
+	logger.Log("Telegram Post Scheduled")
+	waitUntilHour(12, 30)
 
 	post := services.GetNewestPost()
 	postLink, tgErr := services.PostToTelegramChannel(bot, post)
@@ -76,4 +77,26 @@ func ScheduleToTwitter(bot *telego.Bot) {
 		logger.Error("Twitter", "Could not send post confirmation", err)
 		return
 	}
+}
+
+// Checks if the post on database have been posted. If not, schedule it
+func CheckUnpostedPost(bot *telego.Bot) {
+	post := services.GetNewestPost()
+
+	if post == nil {
+		return
+	}
+
+	if !post.PublishedOnBsky {
+		go ScheduleToBsky(bot)
+	}
+
+	if !post.PublishedOnTelegram {
+		go ScheduleToTelegram(bot)
+	}
+
+	if !post.PublishedOnTwitter {
+		go ScheduleToTwitter(bot)
+	}
+
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/tasks"
 )
 
 func main() {
@@ -18,10 +19,10 @@ func main() {
 	//services.InitializeTelegram()
 	database.InitializeDb()
 
-	err := services.InitializeBluesky()
-	if err != nil {
-		logger.Fatal("Bluesky", err)
-	}
+	// err := services.InitializeBluesky()
+	// if err != nil {
+	// 	logger.Fatal("Bluesky", err)
+	// }
 	services.InitializeTwitter()
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 
@@ -48,6 +49,7 @@ func main() {
 	// Stop handling updates
 	defer func() { _ = bh.Stop() }()
 	logger.Log("Bot started as", bot.Username())
+	tasks.CheckUnpostedPost(bot)
 	err = bh.Start()
 	if err != nil {
 		logger.Fatal(err)

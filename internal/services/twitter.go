@@ -43,7 +43,14 @@ func PostToTwitter(post *model.Post) (*string, error) {
 	} else {
 		postLink, err = postTextToTwitter(post)
 	}
-	post.PublishedOnTwitter = err == nil
+
+	if err != nil {
+		return nil, err
+	}
+
+	post.TwitterLink = *postLink
+	post.PublishedOnTwitter = true
+	UpdatePost(post)
 	return postLink, nil
 }
 

@@ -97,6 +97,17 @@ func PostToBsky(post *model.Post) (*string, error) {
 		postLink, err = postText(post)
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
+	post.BskyLink = *postLink
+	post.PublishedOnBsky = true
+	err = UpdatePost(post)
+	if err != nil {
+		logger.Error(err)
+	}
+
 	return postLink, err
 }
 

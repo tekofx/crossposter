@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -13,23 +14,37 @@ import (
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
+var commands = []telego.BotCommand{
+	{Command: "help", Description: "Mostrar mensaje de ayuda"},
+	{Command: "post", Description: "Publica el post"},
+	{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
+	{Command: "borrar", Description: "Elimina el post en cola"},
+}
+
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	postCommand(bh, bot)
 	helpCommand(bh, bot)
 	queueCommand(bh, bot)
 	deleteNewestPostCommand(bh)
+	startCommand(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
-		Commands: []telego.BotCommand{
-			{Command: "help", Description: "Mostrar mensaje de ayuda"},
-			{Command: "post", Description: "Publica el post"},
-			{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
-			{Command: "borrar", Description: "Elimina el post en cola"},
-		},
-		Scope: tu.ScopeChat(tu.ID(int64(config.Conf.TelegramOwner))),
+		Commands: commands,
+		Scope:    tu.ScopeChat(tu.ID(int64(config.Conf.TelegramOwner))),
 	}
 	bot.SetMyCommands(context.Background(), &PrivateChatCommands)
 
+}
+
+func startCommand(bh *th.BotHandler) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+
+		_, err := utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s!", update.Message.From.Username))
+		if err != nil {
+			logger.Fatal(err)
+		}
+		return nil
+	}, th.CommandEqual("start"))
 }
 
 func deleteNewestPostCommand(bh *th.BotHandler) {
@@ -90,17 +105,18 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
-		commands, _ := bot.GetMyCommands(context.Background(), &telego.GetMyCommandsParams{})
-		msg := `Proceso de publicación:
+		var msg strings.Builder
+		msg.WriteString(`Proceso de publicación:
 		1. Envia el texto o las imágenes (sin comprimir, y con texto opcional)
-		2. Usa el comando /post para publicar`
-
-		msg += "\nComandos\n"
+		2. Usa el comando /post para publicar
+		`)
+		msg.WriteString("\nComandos\n")
 
 		for _, command := range commands {
-			msg += fmt.Sprintf("- /%s: %s\n", command.Command, command.Description)
+			fmt.Fprintf(&msg, "- /%s: %s\n", command.Command, command.Description)
 		}
-		_, err := utils.SendMessageToOwner(ctx, msg)
+
+		_, err := utils.SendMessageToOwner(ctx, msg.String())
 		if err != nil {
 			logger.Fatal(err)
 		}

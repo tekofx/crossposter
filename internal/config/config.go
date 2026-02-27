@@ -4,7 +4,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/tekofx/crossposter/internal/logger"
@@ -27,9 +26,9 @@ type Config struct {
 	TwitterAccessToken    string
 	TwitterAccessSecret   string
 
-	// Other config
-	PollInterval time.Duration
-	StateFile    string
+	// Instagram
+	InstagramUserId      string
+	InstagramAccessToken string
 }
 
 var lock = &sync.Mutex{}
@@ -102,9 +101,9 @@ func GetConfig() *Config {
 		TwitterAccessToken:    getStringEnvVariable("TWITTER_ACCESS_TOKEN"),
 		TwitterAccessSecret:   getStringEnvVariable("TWITTER_ACCESS_SECRET"),
 
-		// Other config
-		PollInterval: 10 * time.Minute,
-		StateFile:    "last_bsky_post.txt",
+		// Instagram
+		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID"),
+		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN"),
 	}
 
 }

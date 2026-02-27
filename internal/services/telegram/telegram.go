@@ -1,16 +1,15 @@
-package services
+package telegram
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/services"
 )
 
 func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, error) {
@@ -28,7 +27,7 @@ func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, error) {
 
 	post.TelegramLink = *postLink
 	post.PublishedOnTelegram = true
-	err = UpdatePost(post)
+	err = services.UpdatePost(post)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -76,12 +75,4 @@ func postTgImages(bot *telego.Bot, post *model.Post) (*string, error) {
 	}
 	postLink := getTelegramPostLink(messages[0])
 	return &postLink, nil
-}
-
-func getTelegramPostLink(message telego.Message) string {
-	if message.Chat.Username == "" {
-		return fmt.Sprintf("https://t.me/c/%s/%d", strings.Split(message.Chat.ChatID().String(), "100")[1], message.MessageID)
-	} else {
-		return fmt.Sprintf("https://t.me/c/%s/%d", message.Chat.Username, message.MessageID)
-	}
 }

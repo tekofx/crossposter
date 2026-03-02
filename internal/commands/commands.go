@@ -48,9 +48,8 @@ func startCommand(bh *th.BotHandler) {
 func deleteNewestPostCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		post := services.GetNewestPost()
-
 		if post == nil {
-			utils.SendMessageToOwner(ctx, post.Text)
+			utils.SendMessageToOwner(ctx, "No hay posts en cola")
 			return nil
 		}
 

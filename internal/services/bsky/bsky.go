@@ -2,6 +2,7 @@ package bsky
 
 import (
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
@@ -15,7 +16,7 @@ const (
 	loginUrl        = "https://bsky.social/xrpc/com.atproto.server.createSession"
 )
 
-func InitializeBluesky() error {
+func InitializeBluesky() *merrors.MError {
 	BskyClient = &BlueskyClient{Handle: config.Conf.BskyHandle, Password: config.Conf.BskyAppPassword}
 	if err := authenticate(); err != nil {
 		return err
@@ -23,8 +24,8 @@ func InitializeBluesky() error {
 	return nil
 }
 
-func PostToBsky(post *model.Post) (*string, error) {
-	var err error
+func PostToBsky(post *model.Post) (*string, *merrors.MError) {
+	var err *merrors.MError
 	var postLink *string
 	if post.HasImages {
 		postLink, err = postImages(post)

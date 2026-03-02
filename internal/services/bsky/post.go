@@ -10,18 +10,17 @@ import (
 	"time"
 
 	"github.com/tekofx/crossposter/internal/config"
-	"github.com/tekofx/crossposter/internal/logger"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
-func postImages(post *model.Post) (*string, error) {
+func postImages(post *model.Post) (*string, *merrors.MError) {
 	var uploadImages []ImageItem
 
 	for _, image := range post.Images {
 		blob, err := uploadBlob(&image)
 		if err != nil {
-			logger.Error("Error uploading blob", err)
 			return nil, err
 		}
 
@@ -54,25 +53,25 @@ func postImages(post *model.Post) (*string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("post request failed: %w", err)
+		return nil, merrors.New(merrors.BskyPostRequestErrorCode, err.Error())
 	}
 	defer resp.Body.Close()
 
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, merrors.New(merrors.ReadResponseBodyErrorCode, err.Error())
 	}
 
 	var publishReponse PublishResponse
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+		return nil, merrors.New(merrors.ParseJSONErrorCode, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("post failed: %s %s", resp.Status, resp.Body)
+		return nil, merrors.New(merrors.BskyPostErrorCode, fmt.Sprintf("%s", resp.Body))
 	}
 
 	postLink := fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
@@ -80,7 +79,7 @@ func postImages(post *model.Post) (*string, error) {
 	return &postLink, nil
 }
 
-func postText(post *model.Post) (*string, error) {
+func postText(post *model.Post) (*string, *merrors.MError) {
 	postPayload := PostRequest{
 		Repo:       BskyClient.DID,
 		Collection: "app.bsky.feed.post",
@@ -98,37 +97,37 @@ func postText(post *model.Post) (*string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("post request failed: %w", err)
+		return nil, merrors.New(merrors.BskyPostRequestErrorCode, err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("post failed: %s", resp.Status)
+		return nil, merrors.New(merrors.BskyPostErrorCode, fmt.Sprintf("%s", resp.Body))
 	}
 	// Read response body once
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, merrors.New(merrors.ReadResponseBodyErrorCode, err.Error())
 	}
 
 	var publishReponse PublishResponse
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &publishReponse); err != nil {
-		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+		return nil, merrors.New(merrors.ParseJSONErrorCode, err.Error())
 	}
 	post.BskyLink = fmt.Sprintf("https://bsky.app/profile/%s/post/%s", config.Conf.BskyHandle, utils.LastSplit(publishReponse.Uri, "/"))
 	return &post.BskyLink, nil
 }
-func uploadBlob(image *model.Image) (*Blob, error) {
+func uploadBlob(image *model.Image) (*Blob, *merrors.MError) {
 
 	file, err := os.ReadFile(image.Filename)
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.CannotReadFileErrorCode, err.Error())
 	}
 	req, err := http.NewRequest("POST", uploadBlobUrl, bytes.NewReader(file))
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.CannotCreateRequestErrorCode, err.Error())
 	}
 
 	req.Header.Set("Authorization", "Bearer "+BskyClient.JWT)
@@ -137,25 +136,25 @@ func uploadBlob(image *model.Image) (*Blob, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.DoRequestErrorCode, err.Error())
 	}
 	defer resp.Body.Close()
 
 	// Read the body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, merrors.New(merrors.ReadResponseBodyErrorCode, err.Error())
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("upload failed with status: %d", resp.StatusCode)
+		return nil, merrors.New(merrors.BskyUploadBlobErrorCode, fmt.Sprintf("%s", resp.Body))
 	}
 
 	var blobResp BlobResponse
 
 	// If response is JSON, parse it
 	if err := json.Unmarshal(body, &blobResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
+		return nil, merrors.New(merrors.ParseJSONErrorCode, err.Error())
 	}
 
 	return &blobResp.Blob, nil

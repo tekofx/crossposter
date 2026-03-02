@@ -54,7 +54,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 
 		err := services.UpdatePost(post)
 		if err != nil {
-			return err
+			logger.Error(err)
 		}
 		return nil
 

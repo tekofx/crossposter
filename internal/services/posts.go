@@ -2,10 +2,10 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/tekofx/crossposter/internal/database"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/model"
 	"gorm.io/gorm"
 )
@@ -16,12 +16,11 @@ func CreatePost() *model.Post {
 	return &post
 }
 
-func UpdatePost(post *model.Post) error {
+func UpdatePost(post *model.Post) *merrors.MError {
 	result := database.Database.Save(post)
 
 	if result.Error != nil {
-		fmt.Println("Error updating post:", result)
-		return result.Error
+		return merrors.New(merrors.UpdatePostErrorCode, result.Error.Error())
 	}
 
 	return nil
@@ -55,6 +54,12 @@ func GetNewestPost() *model.Post {
 	return &post
 }
 
-func RemovePost(post *model.Post) error {
-	return database.Database.Delete(post).Error
+func RemovePost(post *model.Post) *merrors.MError {
+
+	err := database.Database.Delete(post)
+	if err.Error != nil {
+		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
+	}
+
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/michimani/gotwi"
 	"github.com/michimani/gotwi/media/upload/types"
@@ -12,14 +11,15 @@ import (
 	"github.com/michimani/gotwi/tweet/managetweet"
 	mtTypes "github.com/michimani/gotwi/tweet/managetweet/types"
 	"github.com/tekofx/crossposter/internal/config"
-	"github.com/tekofx/crossposter/internal/logger"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/utils"
 )
 
 var twitterClient *gotwi.Client
 
-func InitializeTwitter() {
+func InitializeTwitter() *merrors.MError {
 	in := &gotwi.NewClientInput{
 		AuthenticationMethod: gotwi.AuthenMethodOAuth1UserContext,
 		OAuthToken:           config.Conf.TwitterAccessToken,
@@ -30,12 +30,13 @@ func InitializeTwitter() {
 	var err error
 	twitterClient, err = gotwi.NewClient(in)
 	if err != nil {
-		logger.Fatal(err)
+		return merrors.New(merrors.TwitterClientCreationErrorCode, err.Error())
 	}
+	return nil
 }
 
-func PostToTwitter(post *model.Post) (*string, error) {
-	var err error
+func PostToTwitter(post *model.Post) (*string, *merrors.MError) {
+	var err *merrors.MError
 	var postLink *string
 
 	if post.HasImages {
@@ -54,24 +55,23 @@ func PostToTwitter(post *model.Post) (*string, error) {
 	return postLink, nil
 }
 
-func postTextToTwitter(post *model.Post) (*string, error) {
+func postTextToTwitter(post *model.Post) (*string, *merrors.MError) {
 	p := &mtTypes.CreateInput{
 		Text: gotwi.String(post.Text),
 	}
 	res, err := managetweet.Create(context.Background(), twitterClient, p)
 	if err != nil {
-		logger.Error(err)
-		return nil, err
+		return nil, merrors.New(merrors.TwitterCannotPostTextErrorCode, err.Error())
 	}
 	post.TwitterLink = fmt.Sprintf("https://x.com/%s/status/%s", config.Conf.TwitterUsername, *res.Data.ID)
 	return &post.TwitterLink, nil
 }
 
-func postImagesToTwitter(post *model.Post) (*string, error) {
+func postImagesToTwitter(post *model.Post) (*string, *merrors.MError) {
 
 	var mediaIds []string
 	for _, image := range post.Images {
-		fileBytes, err := os.ReadFile(image.Filename)
+		fileBytes, err := utils.ReadFile(image.Filename)
 		if err != nil {
 			return nil, err
 		}

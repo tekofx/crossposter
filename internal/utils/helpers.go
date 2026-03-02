@@ -9,6 +9,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 
@@ -16,26 +17,26 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, error) {
+func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, *merrors.MError) {
 	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
 	))
 
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error())
 	}
 	return msg, nil
 }
 
-func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, error) {
+func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, *merrors.MError) {
 	msg, err := bot.SendMessage(context.Background(), tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
 	))
 
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error())
 	}
 	return msg, nil
 }

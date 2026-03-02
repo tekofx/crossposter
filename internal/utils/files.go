@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	merrors "github.com/tekofx/crossposter/internal/errors"
 )
 
 func fileExists(filename string) bool {
@@ -33,4 +35,13 @@ func downloadFile(downloadURL, saveAs string) error {
 		return fmt.Errorf("failed to save file: %w", err)
 	}
 	return nil
+}
+
+func ReadFile(name string) ([]byte, *merrors.MError) {
+	fileBytes, err := os.ReadFile(name)
+	if err != nil {
+		merrors.New(merrors.CannotReadFileErrorCode, err.Error())
+	}
+
+	return fileBytes, nil
 }

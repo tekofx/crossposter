@@ -55,20 +55,20 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 		if post == nil {
 			_, err := utils.SendMessageToOwner(ctx, post.Text)
 			logger.Error(err)
-			return err
+			return nil
 		}
 
 		err := services.RemovePost(post)
 		if post == nil {
 			_, err = utils.SendMessageToOwner(ctx, post.Text)
 			logger.Error(err)
-			return err
+			return nil
 		}
 
 		_, err = utils.SendMessageToOwner(ctx, "Post eliminado")
 		if err != nil {
 			logger.Error(err)
-			return err
+			return nil
 		}
 		return nil
 	}, th.CommandEqual("borrar"))
@@ -84,7 +84,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post")
 		if err != nil {
 			logger.Error(err)
-			return err
+			return nil
 		}
 		if post.HasImages {
 			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post)
@@ -96,7 +96,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 			_, err = utils.SendMessageToOwner(ctx, post.Text)
 			if err != nil {
 				logger.Error(err)
-				return err
+				return nil
 			}
 		}
 		return nil
@@ -129,8 +129,8 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		post := services.GetNewestPost()
 		if post == nil {
-			_, err := utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
-			return err
+			utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
+			return nil
 		}
 
 		if post.Scheduled {

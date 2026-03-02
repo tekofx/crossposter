@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -10,20 +11,33 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/services/twitter"
 	"github.com/tekofx/crossposter/internal/tasks"
 )
 
 func main() {
+
+	targetDate, duration := tasks.GetScheduledTime(12, 20)
+	remainingHours, remamainingMinutes := tasks.GetDuration(duration)
+	fmt.Println(remainingHours)
+	fmt.Println(remamainingMinutes)
+
+	fmt.Printf("Publicación en Telegram: %s (%d horas y %d minutos)", targetDate.Format("02-01-2006 15:04"), int(duration.Hours()), int(duration.Minutes()))
+
+	return
+
 	config.InitializeConfig()
 	//services.InitializeTelegram()
 	database.InitializeDb()
 
-	err := services.InitializeBluesky()
+	// err := services.InitializeBluesky()
+	// if err != nil {
+	// 	logger.Fatal("Bluesky", err)
+	// }
+	err := twitter.InitializeTwitter()
 	if err != nil {
-		logger.Fatal("Bluesky", err)
+		logger.Fatal(err)
 	}
-	services.InitializeTwitter()
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 
 	if botErr != nil {
@@ -31,13 +45,13 @@ func main() {
 	}
 
 	// Get updates channel
-	updates, err := bot.UpdatesViaLongPolling(context.Background(), nil)
-	if err != nil {
-		logger.Fatal(err)
+	updates, botErr := bot.UpdatesViaLongPolling(context.Background(), nil)
+	if botErr != nil {
+		logger.Fatal(botErr)
 	}
 
 	// Create bot handler and specify from where to get updates
-	bh, err := th.NewBotHandler(bot, updates)
+	bh, botErr := th.NewBotHandler(bot, updates)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -50,7 +64,7 @@ func main() {
 	defer func() { _ = bh.Stop() }()
 	logger.Log("Bot started as", bot.Username())
 	tasks.CheckUnpostedPost(bot)
-	err = bh.Start()
+	botErr = bh.Start()
 	if err != nil {
 		logger.Fatal(err)
 	}

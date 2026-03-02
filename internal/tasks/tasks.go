@@ -8,6 +8,9 @@ import (
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/services/bsky"
+	"github.com/tekofx/crossposter/internal/services/telegram"
+	"github.com/tekofx/crossposter/internal/services/twitter"
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
@@ -22,15 +25,38 @@ func waitUntilHour(hour int, minute int) {
 	time.Sleep(time.Until(target))
 }
 
+func GetScheduledTime(hour int, minute int) (time.Time, time.Duration) {
+	now := time.Now()
+	target := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, now.Location())
+
+	if now.After(target) {
+		target = target.Add(24 * time.Hour)
+	}
+
+	return target, time.Until(target)
+}
+
+func GetDuration(duration time.Duration) (int, int) {
+
+	if duration.Hours() > 1 {
+		fmt.Println(duration.Minutes())
+		return int(duration.Hours()), int(duration.Minutes()) % 60
+	}
+
+	return 0, int(duration.Minutes())
+
+}
+
 func ScheduleToTelegram(bot *telego.Bot, post *model.Post) {
 	post.Scheduled = true
 	services.UpdatePost(post)
-	//waitUntilHour(16, 00)
-	logger.Log("Telegram Post Scheduled")
 
-	waitUntilHour(12, 58)
+	targetTime, duration := GetScheduledTime(12, 58)
+	logger.Log(fmt.Sprintf("Telegram Post Scheduled: %s (%d hours and %d minutes)", targetTime.Format("02-01-2006 15:04"), int(duration.Hours()), int(duration.Minutes())))
+	fmt.Printf("Publicación en Telegram programada: %s (%d horas y %d minutos)", targetTime.Format("02-01-2006 15:04"), int(duration.Hours()), int(duration.Minutes()))
+	time.Sleep(duration)
 
-	postLink, tgErr := services.PostToTelegramChannel(bot, post)
+	postLink, tgErr := telegram.PostToTelegramChannel(bot, post)
 	if tgErr != nil {
 		logger.Error("Telegram", tgErr)
 		return
@@ -54,7 +80,7 @@ func ScheduleToBsky(bot *telego.Bot, post *model.Post) {
 	//waitUntilHour(20, 00)
 	waitUntilHour(13, 01)
 
-	postLink, err := services.PostToBsky(post)
+	postLink, err := bsky.PostToBsky(post)
 	if err != nil {
 		logger.Error("Bluesky Scheduled Post", err)
 		return
@@ -77,7 +103,7 @@ func ScheduleToTwitter(bot *telego.Bot, post *model.Post) {
 	//waitUntilHour(20, 00)
 	waitUntilHour(13, 01)
 
-	postLink, err := services.PostToTwitter(post)
+	postLink, err := twitter.PostToTwitter(post)
 	if err != nil {
 		logger.Error("Twitter Scheduled Post", err)
 		return

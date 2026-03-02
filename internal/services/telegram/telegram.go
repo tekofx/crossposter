@@ -7,14 +7,15 @@ import (
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 )
 
-func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, error) {
+func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, *merrors.MError) {
 	var postLink *string
-	var err error
+	var err *merrors.MError
 	if post.HasImages {
 		postLink, err = postTgImages(bot, post)
 	} else {
@@ -35,23 +36,23 @@ func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, error) {
 	return postLink, err
 }
 
-func postTgText(bot *telego.Bot, post *model.Post) (*string, error) {
+func postTgText(bot *telego.Bot, post *model.Post) (*string, *merrors.MError) {
 	message, err := bot.SendMessage(context.Background(), tu.Message(tu.ID(int64(config.Conf.TelegramChannelId)), post.Text))
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.TelegramCannotSendMessageToChannelErrorCode, err.Error())
 	}
 
 	postLink := getTelegramPostLink(*message)
-	return &postLink, err
+	return &postLink, nil
 }
 
-func postTgImages(bot *telego.Bot, post *model.Post) (*string, error) {
+func postTgImages(bot *telego.Bot, post *model.Post) (*string, *merrors.MError) {
 
 	var photos []telego.InputMedia
 	for i, image := range post.Images {
 		file, err := os.Open(image.Filename)
 		if err != nil {
-			return nil, err
+			return nil, merrors.New(merrors.CannotReadFileErrorCode, err.Error())
 		}
 		inputFile := telego.InputFile{
 			File: file,
@@ -71,7 +72,7 @@ func postTgImages(bot *telego.Bot, post *model.Post) (*string, error) {
 		Media:  photos,
 	})
 	if err != nil {
-		return nil, err
+		return nil, merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 	}
 	postLink := getTelegramPostLink(messages[0])
 	return &postLink, nil

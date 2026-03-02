@@ -39,17 +39,25 @@ const (
 	BskyPostErrorCode        MErrorCode = 2005
 
 	// 2100 -> 2199 | TWITTER ERRORS
+	TwitterClientCreationErrorCode          MErrorCode = 2100
+	TwitterInitializeErrorCode              MErrorCode = 2101
+	TwitterCannotPostTextErrorCode          MErrorCode = 2102
+	TwitterCannotAppendMediaUploadErrorCode MErrorCode = 2103
+	TwitterCannotFinalizeInputErrorCode     MErrorCode = 2104
+	TwitterCannotCreatePostErrorCode        MErrorCode = 2105
 
 	// 2200 -> 2299 | INSTAGRAM ERRORS
-
-	// 2300 -> 2399 | TELEGRAM CHANNEL ERRORS
+	InstagramUploadImageErrorCode MErrorCode = 2200
 
 	// 2400 -> 2499 | TELEGRAM BOT ERRORS
-	CannotSendMessageToOwner MErrorCode = 2400
+	TelegramCannotSendMessageToOwnerErrorCode   MErrorCode = 2400
+	TelegramCannotSendMediaGroupErrorCode       MErrorCode = 2401
+	TelegramCannotSendMessageToChannelErrorCode MErrorCode = 2402
 
 	// 4000 -> 4999 | DATABASE ERRORS
 	NotFoundErrorCode   MErrorCode = 4000
 	UpdatePostErrorCode MErrorCode = 4001
+	RemovePostErrorCode MErrorCode = 4002
 
 	// 5000 -> 5999 | AUTHORITATION ERRORS
 	UnauthorizedErrorCode MErrorCode = 5000

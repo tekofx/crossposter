@@ -40,10 +40,7 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 func startCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
-		_, err := utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s! Usa /help para obtener info sobre mis comandos", update.Message.From.Username))
-		if err != nil {
-			logger.Fatal(err)
-		}
+		utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s! Usa /help para obtener info sobre mis comandos", update.Message.From.Username))
 		return nil
 	}, th.CommandEqual("start"))
 }
@@ -53,23 +50,16 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 		post := services.GetNewestPost()
 
 		if post == nil {
-			_, err := utils.SendMessageToOwner(ctx, post.Text)
-			logger.Error(err)
+			utils.SendMessageToOwner(ctx, post.Text)
 			return nil
 		}
 
 		err := services.RemovePost(post)
-		if post == nil {
-			_, err = utils.SendMessageToOwner(ctx, post.Text)
-			logger.Error(err)
+		if err == nil {
+			utils.SendMessageToOwner(ctx, post.Text)
 			return nil
 		}
-
-		_, err = utils.SendMessageToOwner(ctx, "Post eliminado")
-		if err != nil {
-			logger.Error(err)
-			return nil
-		}
+		utils.SendMessageToOwner(ctx, "Post eliminado")
 		return nil
 	}, th.CommandEqual("borrar"))
 }
@@ -81,23 +71,16 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
-		_, err := utils.SendMessageToOwner(ctx, "Obteniendo post")
-		if err != nil {
-			logger.Error(err)
-			return nil
-		}
+		utils.SendMessageToOwner(ctx, "Obteniendo post")
+
 		if post.HasImages {
 			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post)
 			if err != nil {
 				logger.Error(err)
-				return err
-			}
-		} else {
-			_, err = utils.SendMessageToOwner(ctx, post.Text)
-			if err != nil {
-				logger.Error(err)
 				return nil
 			}
+		} else {
+			utils.SendMessageToOwner(ctx, post.Text)
 		}
 		return nil
 	}, th.CommandEqual("cola"))
@@ -117,10 +100,8 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 			fmt.Fprintf(&msg, "- /%s: %s\n", command.Command, command.Description)
 		}
 
-		_, err := utils.SendMessageToOwner(ctx, msg.String())
-		if err != nil {
-			logger.Fatal(err)
-		}
+		utils.SendMessageToOwner(ctx, msg.String())
+
 		return nil
 	}, th.CommandEqual("help"))
 }

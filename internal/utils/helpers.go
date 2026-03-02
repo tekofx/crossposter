@@ -17,16 +17,17 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func SendMessageToOwner(ctx *th.Context, text string) (*telego.Message, *merrors.MError) {
+func SendMessageToOwner(ctx *th.Context, text string) *telego.Message {
 	msg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
 	))
 
 	if err != nil {
-		return nil, merrors.New(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error())
+		logger.Fatal(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error())
+		return nil
 	}
-	return msg, nil
+	return msg
 }
 
 func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, *merrors.MError) {
@@ -41,15 +42,14 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, 
 	return msg, nil
 }
 
-func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) error {
+func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) *merrors.MError {
 	var media []telego.InputMedia
 
 	for i, image := range post.Images {
 
 		downloadedImage, err := os.Open(image.Filename)
 		if err != nil {
-			logger.Error("Error opening file:", err)
-			return err
+			return merrors.New(merrors.CannotReadFileErrorCode, err.Error())
 		}
 		defer downloadedImage.Close()
 
@@ -73,7 +73,10 @@ func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) er
 	}
 
 	_, err := bot.SendMediaGroup(context.Background(), &params)
-	return err
+	if err != nil {
+		return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
+	}
+	return nil
 }
 
 func DownloadImage(bot *telego.Bot, fileId string) (*string, error) {

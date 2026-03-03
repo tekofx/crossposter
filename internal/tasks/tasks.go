@@ -55,31 +55,33 @@ func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post,
 }
 
 // Checks if the post on database have been posted. If not, schedule it
-func CheckUnpostedPost(bot *telego.Bot) {
-	post, err := services.GetNewestPost()
+func CheckUnpostedPosts(bot *telego.Bot) {
+	posts, err := services.GetPosts()
 	if err != nil {
 		logger.Error("CheckUnpostedPost", err)
 		return
 	}
 
-	if post == nil {
+	if len(posts) == 0 {
 		return
 	}
 
-	if !post.PublishedOnBsky {
-		go SchedulePost(model.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
-	}
+	for _, post := range posts {
+		if !post.PublishedOnBsky {
+			go SchedulePost(model.Bluesky, bot, &post, config.Conf.BskyPostHour, 0)
+		}
 
-	if !post.PublishedOnInstagram {
-		go SchedulePost(model.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
-	}
+		if !post.PublishedOnInstagram {
+			go SchedulePost(model.Instagram, bot, &post, config.Conf.InstagramPostHour, 0)
+		}
 
-	if !post.PublishedOnTelegram {
-		go SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
-	}
+		if !post.PublishedOnTelegram {
+			go SchedulePost(model.Telegram, bot, &post, config.Conf.TelegramPostHour, 0)
+		}
 
-	if !post.PublishedOnTwitter {
-		go SchedulePost(model.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
+		if !post.PublishedOnTwitter {
+			go SchedulePost(model.Twitter, bot, &post, config.Conf.TwitterPostHour, 0)
+		}
 	}
 
 }

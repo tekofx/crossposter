@@ -53,7 +53,7 @@ func main() {
 	// Stop handling updates
 	defer func() { _ = bh.Stop() }()
 	logger.Log("Bot started as", bot.Username())
-	tasks.CheckUnpostedPost(bot)
+	tasks.CheckUnpostedPosts(bot)
 	botErr = bh.Start()
 	if botErr != nil {
 		logger.Fatal(err)

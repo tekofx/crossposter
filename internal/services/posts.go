@@ -86,7 +86,7 @@ func RemovePostById(postId int) *merrors.MError {
 	return nil
 }
 
-func GetPostById(postId string) (*model.Post, *merrors.MError) {
+func GetPostById(postId int) (*model.Post, *merrors.MError) {
 	var post model.Post
 	err := database.Database.Find(&post, postId).Error
 	if err != nil {

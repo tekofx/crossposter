@@ -50,7 +50,7 @@ func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post,
 		logger.Error(social.String(), "Scheduled Post", "Could not send post confirmation", err)
 		return
 	}
-	checkToRemovePost(bot)
+	checkToRemovePost(bot, post)
 
 }
 
@@ -92,12 +92,7 @@ func CheckUnpostedPosts(bot *telego.Bot) {
 }
 
 // If post have been posted to all socials, remove it from database
-func checkToRemovePost(bot *telego.Bot) {
-	post, err := services.GetNewestPost()
-	if err != nil {
-		logger.Error("CheckToRemovePost", err)
-		return
-	}
+func checkToRemovePost(bot *telego.Bot, post *model.Post) {
 
 	if post.PublishedOnBsky && post.PublishedOnTelegram && post.PublishedOnTwitter {
 		_, err := utils.SendMessageToOwnerUsingBot(bot, "Se ha publicado el post en todas las redes sociales. Eliminado de la cola.")

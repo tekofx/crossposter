@@ -24,6 +24,7 @@ const (
 	CannotReadFileErrorCode             MErrorCode = 6
 	CannotCreateRequestErrorCode        MErrorCode = 7
 	DoRequestErrorCode                  MErrorCode = 8
+	CannotConvertToIntErrorCode         MErrorCode = 9
 
 	// 1000 -> 1999 | VALIDATION ERRORS
 	InvalidRequestErrorCode   MErrorCode = 1000
@@ -53,6 +54,7 @@ const (
 	TelegramCannotSendMessageToOwnerErrorCode   MErrorCode = 2400
 	TelegramCannotSendMediaGroupErrorCode       MErrorCode = 2401
 	TelegramCannotSendMessageToChannelErrorCode MErrorCode = 2402
+	TelegramArgumentNotProvidedErrorCode        MErrorCode = 2403
 
 	// 4000 -> 4999 | DATABASE ERRORS
 	NotFoundErrorCode   MErrorCode = 4000

@@ -9,6 +9,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/tasks"
@@ -24,9 +25,9 @@ var commands = []telego.BotCommand{
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	postCommand(bh, bot)
-	helpCommand(bh, bot)
+	helpCommand(bh)
 	queueCommand(bh, bot)
-	deleteNewestPostCommand(bh)
+	deletePostCommand(bh)
 	startCommand(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
@@ -45,17 +46,25 @@ func startCommand(bh *th.BotHandler) {
 	}, th.CommandEqual("start"))
 }
 
-func deleteNewestPostCommand(bh *th.BotHandler) {
+func deletePostCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post := services.GetNewestPost()
-		if post == nil {
-			utils.SendMessageToOwner(ctx, "No hay posts en cola")
+
+		num, err := utils.GetIntArgument(update.Message.Text)
+		if err != nil {
+			logger.Error("Delete Command", err.Message)
+			switch err.Code {
+			case merrors.CannotConvertToIntErrorCode:
+				utils.SendMessageToOwner(ctx, "El argumento no es un número válido")
+			case merrors.TelegramArgumentNotProvidedErrorCode:
+				utils.SendMessageToOwner(ctx, "Falta el id del post a eliminar. Usa /borrar id")
+			}
 			return nil
 		}
 
-		err := services.RemovePost(post)
-		if err == nil {
-			utils.SendMessageToOwner(ctx, post.Text)
+		err = services.RemovePostById(*num)
+		if err != nil {
+			utils.SendMessageToOwner(ctx, "No se ha podido eliminar el post debido a un error")
+			logger.Error("Delete Command", err)
 			return nil
 		}
 		utils.SendMessageToOwner(ctx, "Post eliminado")
@@ -65,27 +74,30 @@ func deleteNewestPostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post := services.GetNewestPost()
-		if post == nil {
+		posts, err := services.GetPosts()
+		if err != nil {
+			logger.Error("Queue command", err)
+			return nil
+		}
+		if len(posts) == 0 {
 			utils.SendMessageToOwner(ctx, "No hay contenido en cola")
 			return nil
 		}
-		utils.SendMessageToOwner(ctx, "Obteniendo post")
+		utils.SendMessageToOwner(ctx, "Obteniendo posts")
 
-		if post.HasImages {
-			err := utils.SendMediaGroupByFileIDs(bot, int64(config.Conf.TelegramOwner), post)
+		for _, post := range posts {
+			err := utils.SendPostToOwner(bot, &post)
 			if err != nil {
-				logger.Error(err)
+				logger.Error("Queue command", err)
 				return nil
 			}
-		} else {
-			utils.SendMessageToOwner(ctx, post.Text)
 		}
+
 		return nil
 	}, th.CommandEqual("cola"))
 }
 
-func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
+func helpCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
 		var msg strings.Builder
@@ -107,7 +119,12 @@ func helpCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post := services.GetNewestPost()
+		post, err := services.GetNewestPost()
+		if err != nil {
+			logger.Error("Post command", err)
+			utils.SendMessageToOwner(ctx, "Error al usar comando post")
+			return nil
+		}
 		if post == nil {
 			utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
 			return nil

@@ -24,10 +24,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessageToOwner(ctx, "Envía el archivo como imagen")
 			return nil
 		}
-		post := services.GetNewestPost()
-		if post == nil {
-			post = services.CreatePost()
-		}
+		post := services.CreatePost()
 
 		if len(update.Message.Photo) > 0 {
 			photoLen := len(update.Message.Photo)

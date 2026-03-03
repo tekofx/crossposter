@@ -9,6 +9,7 @@ import (
 
 type Post struct {
 	gorm.Model
+
 	// Data
 	Text   string
 	Images []Image

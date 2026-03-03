@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"log"
 
 	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
@@ -34,7 +33,7 @@ func PostExistsInDatabase(bskyId string) bool {
 	return err == nil
 }
 
-func GetNewestPost() *model.Post {
+func GetNewestPost() (*model.Post, *merrors.MError) {
 	var post model.Post
 
 	err := database.Database.
@@ -44,22 +43,55 @@ func GetNewestPost() *model.Post {
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil // No posts in the database
+			return nil, nil // No posts in the database
 		}
-		// Log unexpected errors
-		log.Printf("Database error fetching newest post: %v", err)
-		return nil
+		return nil, merrors.New(merrors.DatabaseErrorCode, err.Error())
 	}
 
-	return &post
+	return &post, nil
+}
+
+func GetPosts() ([]model.Post, *merrors.MError) {
+	var posts []model.Post
+
+	err := database.Database.
+		Order("created_at DESC").
+		Preload("Images"). // Load associated images (optional)
+		Find(&posts).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return posts, nil // No posts in the database
+		}
+		return posts, merrors.New(merrors.DatabaseErrorCode, err.Error())
+	}
+
+	return posts, nil
 }
 
 func RemovePost(post *model.Post) *merrors.MError {
-
 	err := database.Database.Delete(post)
 	if err.Error != nil {
 		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
 	}
 
 	return nil
+}
+
+func RemovePostById(postId int) *merrors.MError {
+	err := database.Database.Delete(&model.Post{}, postId)
+	if err.Error != nil {
+		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
+	}
+	return nil
+}
+
+func GetPostById(postId string) (*model.Post, *merrors.MError) {
+	var post model.Post
+	err := database.Database.Find(&post, postId).Error
+	if err != nil {
+		return nil, merrors.New(merrors.DatabaseErrorCode, err.Error())
+	}
+
+	return &post, nil
 }

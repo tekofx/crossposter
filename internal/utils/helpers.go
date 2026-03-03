@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/mymmrac/telego"
@@ -42,8 +43,18 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, 
 	return msg, nil
 }
 
-func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) *merrors.MError {
+func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 	var media []telego.InputMedia
+
+	text := fmt.Sprintf("Id:%d", post.ID)
+	if post.Text != "" {
+		text += fmt.Sprintf("\n%s", post.Text)
+	}
+
+	if !post.HasImages {
+		SendMessageToOwnerUsingBot(bot, text)
+		return nil
+	}
 
 	for i, image := range post.Images {
 
@@ -62,13 +73,13 @@ func SendMediaGroupByFileIDs(bot *telego.Bot, chatID int64, post *model.Post) *m
 			Media: inputFile,
 		}
 		if i == 0 {
-			photo.Caption = post.Text
+			photo.Caption = text
 		}
 		media = append(media, photo)
 	}
 
 	params := telego.SendMediaGroupParams{
-		ChatID: telego.ChatID{ID: chatID},
+		ChatID: telego.ChatID{ID: int64(config.Conf.TelegramOwner)},
 		Media:  media,
 	}
 
@@ -106,4 +117,19 @@ func IsImageExtension(path string) bool {
 	default:
 		return false
 	}
+}
+
+func GetIntArgument(text string) (*int, *merrors.MError) {
+	args := strings.Fields(text)[1:]
+	if len(args) < 1 {
+		return nil, merrors.New(merrors.TelegramArgumentNotProvidedErrorCode, "Missing int argument")
+	}
+
+	num, err := strconv.Atoi(args[0])
+	if err != nil {
+		logger.Error("Delete Post command", err)
+		return nil, merrors.New(merrors.CannotConvertToIntErrorCode, "Provided argument is not an int")
+	}
+
+	return &num, nil
 }

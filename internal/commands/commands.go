@@ -22,14 +22,16 @@ var commands = []telego.BotCommand{
 	{Command: "post", Description: "Publica el post"},
 	{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
 	{Command: "borrar", Description: "Elimina el post en cola"},
+	{Command: "cancelar", Description: "Cancela la programación de un post"},
 }
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	postCommand(bh, bot)
 	helpCommand(bh)
-	queueCommand(bh, bot)
+	queueCommand(bh)
 	deletePostCommand(bh)
 	startCommand(bh)
+	cancelCommand(bh, bot)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: commands,
@@ -72,7 +74,7 @@ func deletePostCommand(bh *th.BotHandler) {
 	}, th.CommandEqual("borrar"))
 }
 
-func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
+func queueCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		posts, err := services.GetPosts()
 		if err != nil {
@@ -86,7 +88,7 @@ func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 		utils.SendMessageToOwner(ctx, "Obteniendo posts")
 
 		for _, post := range posts {
-			err := utils.SendPostToOwner(bot, &post)
+			err := utils.SendPostToOwner(ctx, &post)
 			if err != nil {
 				logger.Error("Queue command", err)
 				return nil
@@ -115,6 +117,30 @@ func helpCommand(bh *th.BotHandler) {
 
 		return nil
 	}, th.CommandEqual("help"))
+}
+func cancelCommand(bh *th.BotHandler, bot *telego.Bot) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		num, err := utils.GetIntArgument(update.Message.Text)
+		if err != nil {
+			logger.Error("Cancel Command", err.Message)
+			switch err.Code {
+			case merrors.CannotConvertToIntErrorCode:
+				utils.SendMessageToOwner(ctx, "El argumento no es un número válido")
+			case merrors.TelegramArgumentNotProvidedErrorCode:
+				utils.SendMessageToOwner(ctx, "Falta el id del post. Usa /cancel id")
+			}
+			return nil
+		}
+
+		tasks.StopTasksOfPost(*num)
+		post, _ := services.GetPostById(*num)
+		post.Status = model.Created
+		services.UpdatePost(post)
+		utils.SendMessageToOwner(ctx, "Post cancelado")
+
+		return nil
+	})
+
 }
 
 func postCommand(bh *th.BotHandler, bot *telego.Bot) {

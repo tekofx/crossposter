@@ -4,20 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tekofx/crossposter/internal/types"
 	"gorm.io/gorm"
 )
-
-type PostStatus int
-
-const (
-	Created PostStatus = iota
-	Scheduled
-	Posted
-)
-
-func (d PostStatus) String() string {
-	return [...]string{"Creado", "Programado", "Publicado"}[d]
-}
 
 type Post struct {
 	gorm.Model
@@ -40,7 +29,7 @@ type Post struct {
 	CreatedAt time.Time `gorm:"type:DATE;"`
 	HasText   bool
 	HasImages bool
-	Status    PostStatus
+	Status    types.PostStatus
 }
 
 func (post *Post) String() string {

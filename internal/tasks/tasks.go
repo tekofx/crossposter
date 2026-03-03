@@ -15,6 +15,7 @@ import (
 	"github.com/tekofx/crossposter/internal/services/bsky"
 	"github.com/tekofx/crossposter/internal/services/telegram"
 	"github.com/tekofx/crossposter/internal/services/twitter"
+	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
@@ -49,16 +50,16 @@ func getScheduledTime(hour int, minute int) (time.Time, time.Duration) {
 	return target, target.Sub(now)
 }
 
-func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post, hour int, minute int) {
+func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post, hour int, minute int) {
 
 	taskId := strconv.Itoa(int(post.ID)) + social.String()
 	tasksManager.StartTask(taskId, func(ctx context.Context) {
-		post.Status = model.Scheduled
+		post.Status = types.Scheduled
 		services.UpdatePost(post)
 
 		targetTime, duration := getScheduledTime(hour, minute)
 		// TODO: Remove before prod
-		duration = time.Second * 15
+		duration = time.Second * 2
 		logger.Log("Task", taskId, formatSchedule("Post Schedule", targetTime, duration))
 		utils.SendMessageToOwnerUsingBot(bot, formatSchedule(social.String(), targetTime, duration))
 		select {
@@ -73,15 +74,15 @@ func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post,
 		var err *merrors.MError
 
 		switch social {
-		case model.Bluesky:
+		case types.Bluesky:
 			postLink, err = bsky.PostToBsky(post)
-		case model.Instagram:
+		case types.Instagram:
 			tmp := "instagram.com"
 			postLink = &tmp
 			//err = instagram.PostToInstagram(post)
-		case model.Telegram:
+		case types.Telegram:
 			postLink, err = telegram.PostToTelegramChannel(bot, post)
-		case model.Twitter:
+		case types.Twitter:
 			postLink, err = twitter.PostToTwitter(post)
 		}
 
@@ -114,24 +115,24 @@ func CheckUnpostedPosts(bot *telego.Bot) {
 	}
 
 	for _, post := range posts {
-		if post.Status != model.Scheduled {
+		if post.Status != types.Scheduled {
 			return
 		}
 
 		if !post.PublishedOnBsky {
-			SchedulePost(model.Bluesky, bot, &post, config.Conf.InstagramPostHour, 0)
+			SchedulePost(types.Bluesky, bot, &post, config.Conf.InstagramPostHour, 0)
 		}
 
 		if !post.PublishedOnInstagram {
-			SchedulePost(model.Instagram, bot, &post, config.Conf.InstagramPostHour, 0)
+			SchedulePost(types.Instagram, bot, &post, config.Conf.InstagramPostHour, 0)
 		}
 
 		if !post.PublishedOnTelegram {
-			SchedulePost(model.Telegram, bot, &post, config.Conf.TelegramPostHour, 0)
+			SchedulePost(types.Telegram, bot, &post, config.Conf.TelegramPostHour, 0)
 		}
 
 		if !post.PublishedOnTwitter {
-			SchedulePost(model.Twitter, bot, &post, config.Conf.TwitterPostHour, 0)
+			SchedulePost(types.Twitter, bot, &post, config.Conf.TwitterPostHour, 0)
 		}
 	}
 

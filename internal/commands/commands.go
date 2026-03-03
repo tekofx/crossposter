@@ -11,9 +11,9 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/tasks"
+	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
 )
 
@@ -134,7 +134,7 @@ func cancelCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		tasks.StopTasksOfPost(*num)
 		post, _ := services.GetPostById(*num)
-		post.Status = model.Created
+		post.Status = types.Created
 		services.UpdatePost(post)
 		utils.SendMessageToOwner(ctx, "Post cancelado")
 
@@ -167,18 +167,18 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			return nil
 		}
 
-		if post.Status == model.Scheduled {
+		if post.Status == types.Scheduled {
 			utils.SendMessageToOwner(ctx, "El post ya está programado")
 			return nil
 		}
 
 		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		go tasks.SchedulePost(model.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
-		go tasks.SchedulePost(model.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
-		//go tasks.SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
-		go tasks.SchedulePost(model.Telegram, bot, post, 11, 55)
-		go tasks.SchedulePost(model.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
+		go tasks.SchedulePost(types.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
+		go tasks.SchedulePost(types.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
+		//go tasks.SchedulePost(types.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
+		go tasks.SchedulePost(types.Telegram, bot, post, 11, 55)
+		go tasks.SchedulePost(types.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
 
 		return nil
 	}, th.CommandEqual("post"))

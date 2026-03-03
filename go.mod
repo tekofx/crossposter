@@ -1,11 +1,11 @@
 module github.com/tekofx/crossposter
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/joho/godotenv v1.5.1
-	github.com/mymmrac/telego v1.6.0
+	github.com/mymmrac/telego v1.7.0
 )
 
 require (

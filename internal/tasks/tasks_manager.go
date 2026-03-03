@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-
-	"github.com/tekofx/crossposter/internal/logger"
 )
 
 type TasksManager struct {
@@ -44,7 +42,6 @@ func (tm *TasksManager) GetAllTasks() string {
 
 // StopTask stops a specific goroutine by ID
 func (tm *TasksManager) StopTask(id string) {
-	logger.Log("Stopping task", id)
 	tm.mu.Lock()
 	cancel, exists := tm.tasks[id]
 	if exists {

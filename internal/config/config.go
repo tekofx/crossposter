@@ -13,11 +13,13 @@ type Config struct {
 	// Bluesky
 	BskyHandle      string
 	BskyAppPassword string
+	BskyPostHour    int
 
 	// Telegram
 	TelegramBotToken  string
 	TelegramChannelId int
 	TelegramOwner     int
+	TelegramPostHour  int
 
 	// Twitter
 	TwitterUsername       string
@@ -25,10 +27,12 @@ type Config struct {
 	TwitterConsumerSecret string
 	TwitterAccessToken    string
 	TwitterAccessSecret   string
+	TwitterPostHour       int
 
 	// Instagram
 	InstagramUserId      string
 	InstagramAccessToken string
+	InstagramPostHour    int
 }
 
 var lock = &sync.Mutex{}
@@ -88,11 +92,13 @@ func GetConfig() *Config {
 		// Bluesky
 		BskyHandle:      getStringEnvVariable("BSKY_HANDLE"),
 		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD"),
+		BskyPostHour:    getIntEnvVariable("BSKY_POST_HOUR"),
 
 		// Telegram
 		TelegramBotToken:  getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
 		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID"),
 		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER"),
+		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR"),
 
 		// Twitter
 		TwitterUsername:       getStringEnvVariable("TWITTER_USERNAME"),
@@ -100,10 +106,12 @@ func GetConfig() *Config {
 		TwitterConsumerSecret: getStringEnvVariable("TWITTER_CONSUMER_SECRET"),
 		TwitterAccessToken:    getStringEnvVariable("TWITTER_ACCESS_TOKEN"),
 		TwitterAccessSecret:   getStringEnvVariable("TWITTER_ACCESS_SECRET"),
+		TwitterPostHour:       getIntEnvVariable("TWITTER_POST_HOUR"),
 
 		// Instagram
 		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID"),
 		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN"),
+		InstagramPostHour:    getIntEnvVariable("INSTAGRAM_POST_HOUR"),
 	}
 
 }

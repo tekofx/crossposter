@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mymmrac/telego"
+	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
@@ -66,19 +67,19 @@ func CheckUnpostedPost(bot *telego.Bot) {
 	}
 
 	if !post.PublishedOnBsky {
-		go SchedulePost(model.Bluesky, bot, post, 20, 0)
+		go SchedulePost(model.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
 	}
 
 	if !post.PublishedOnInstagram {
-		go SchedulePost(model.Instagram, bot, post, 20, 0)
+		go SchedulePost(model.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
 	}
 
 	if !post.PublishedOnTelegram {
-		go SchedulePost(model.Telegram, bot, post, 20, 0)
+		go SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
 	}
 
 	if !post.PublishedOnTwitter {
-		go SchedulePost(model.Twitter, bot, post, 20, 0)
+		go SchedulePost(model.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
 	}
 
 }

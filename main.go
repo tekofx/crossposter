@@ -55,7 +55,7 @@ func main() {
 	logger.Log("Bot started as", bot.Username())
 	tasks.CheckUnpostedPost(bot)
 	botErr = bh.Start()
-	if err != nil {
+	if botErr != nil {
 		logger.Fatal(err)
 	}
 }

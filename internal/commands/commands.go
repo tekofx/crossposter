@@ -150,10 +150,10 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		go tasks.SchedulePost(model.Bluesky, bot, post, 20, 0)
-		go tasks.SchedulePost(model.Instagram, bot, post, 20, 0)
-		go tasks.SchedulePost(model.Telegram, bot, post, 20, 0)
-		go tasks.SchedulePost(model.Twitter, bot, post, 20, 0)
+		go tasks.SchedulePost(model.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
+		go tasks.SchedulePost(model.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
+		go tasks.SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
+		go tasks.SchedulePost(model.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
 
 		return nil
 	}, th.CommandEqual("post"))

@@ -43,13 +43,13 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, 
 	return msg, nil
 }
 
-func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
+func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 	var media []telego.InputMedia
 
 	text := post.String()
 
 	if !post.HasImages {
-		SendMessageToOwnerUsingBot(bot, text)
+		SendMessageToOwner(ctx, text)
 		return nil
 	}
 
@@ -80,7 +80,7 @@ func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 		Media:  media,
 	}
 
-	_, err := bot.SendMediaGroup(context.Background(), &params)
+	_, err := ctx.Bot().SendMediaGroup(context.Background(), &params)
 	if err != nil {
 		return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 	}

@@ -46,10 +46,7 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, 
 func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 	var media []telego.InputMedia
 
-	text := fmt.Sprintf("Id:%d", post.ID)
-	if post.Text != "" {
-		text += fmt.Sprintf("\n%s", post.Text)
-	}
+	text := post.String()
 
 	if !post.HasImages {
 		SendMessageToOwnerUsingBot(bot, text)

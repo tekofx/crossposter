@@ -7,6 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
+type PostStatus int
+
+const (
+	Created PostStatus = iota
+	Scheduled
+	Posted
+)
+
+func (d PostStatus) String() string {
+	return [...]string{"Creado", "Programado", "Publicado"}[d]
+}
+
 type Post struct {
 	gorm.Model
 
@@ -28,10 +40,10 @@ type Post struct {
 	CreatedAt time.Time `gorm:"type:DATE;"`
 	HasText   bool
 	HasImages bool
-	Scheduled bool
+	Status    PostStatus
 }
 
-func (post *Post) Message() string {
+func (post *Post) String() string {
 	format := func(ok bool, service string, url string) string {
 		if ok {
 			return fmt.Sprintf("✅ [%s](%s)", service, url)
@@ -39,8 +51,11 @@ func (post *Post) Message() string {
 		return fmt.Sprintf("❌ %s", service)
 	}
 
-	return fmt.Sprintf("Resultado\n%s\n%s\n%s",
+	return fmt.Sprintf("ID: %d\nEstado: %s\n%s\n%s\n%s\n%s",
+		post.ID,
+		post.Status.String(),
 		format(post.PublishedOnBsky, "Bluesky", post.BskyLink),
+		format(post.PublishedOnInstagram, "Instagram", post.BskyLink),
 		format(post.PublishedOnTelegram, "Telegram", post.TelegramLink),
 		format(post.PublishedOnTwitter, "Twitter", post.TwitterLink),
 	)

@@ -143,7 +143,7 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			return nil
 		}
 
-		if post.Scheduled {
+		if post.Status == model.Scheduled {
 			utils.SendMessageToOwner(ctx, "El post ya está programado")
 			return nil
 		}
@@ -152,7 +152,8 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		go tasks.SchedulePost(model.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
 		go tasks.SchedulePost(model.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
-		go tasks.SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
+		//go tasks.SchedulePost(model.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
+		go tasks.SchedulePost(model.Telegram, bot, post, 11, 55)
 		go tasks.SchedulePost(model.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
 
 		return nil

@@ -30,7 +30,7 @@ func getScheduledTime(hour int, minute int) (time.Time, time.Duration) {
 }
 
 func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post, hour int, minute int) {
-	post.Scheduled = true
+	post.Status = model.Scheduled
 	services.UpdatePost(post)
 
 	targetTime, duration := getScheduledTime(hour, minute)
@@ -54,7 +54,7 @@ func SchedulePost(social model.SocialNetWork, bot *telego.Bot, post *model.Post,
 
 }
 
-// Checks if the post on database have been posted. If not, schedule it
+// Checks if the post on database have been posted. If ncoot, schedule it
 func CheckUnpostedPosts(bot *telego.Bot) {
 	posts, err := services.GetPosts()
 	if err != nil {
@@ -67,6 +67,11 @@ func CheckUnpostedPosts(bot *telego.Bot) {
 	}
 
 	for _, post := range posts {
+
+		if post.Status != model.Scheduled {
+			return
+		}
+
 		if !post.PublishedOnBsky {
 			go SchedulePost(model.Bluesky, bot, &post, config.Conf.BskyPostHour, 0)
 		}

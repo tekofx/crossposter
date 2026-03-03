@@ -14,13 +14,15 @@ type Post struct {
 	Text   string
 	Images []Image
 
-	PublishedOnBsky     bool
-	PublishedOnTelegram bool
-	PublishedOnTwitter  bool
+	PublishedOnBsky      bool
+	PublishedOnInstagram bool
+	PublishedOnTelegram  bool
+	PublishedOnTwitter   bool
 
-	BskyLink     string
-	TelegramLink string
-	TwitterLink  string
+	BskyLink      string
+	InstagramLink string
+	TelegramLink  string
+	TwitterLink   string
 
 	// Meta
 	CreatedAt time.Time `gorm:"type:DATE;"`

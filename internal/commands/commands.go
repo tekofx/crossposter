@@ -11,6 +11,7 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/tasks"
 	"github.com/tekofx/crossposter/internal/utils"
@@ -119,7 +120,19 @@ func helpCommand(bh *th.BotHandler) {
 
 func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		post, err := services.GetNewestPost()
+		num, err := utils.GetIntArgument(update.Message.Text)
+		if err != nil {
+			logger.Error("Post Command", err.Message)
+			switch err.Code {
+			case merrors.CannotConvertToIntErrorCode:
+				utils.SendMessageToOwner(ctx, "El argumento no es un número válido")
+			case merrors.TelegramArgumentNotProvidedErrorCode:
+				utils.SendMessageToOwner(ctx, "Falta el id del post. Usa /post id")
+			}
+			return nil
+		}
+
+		post, err := services.GetPostById(*num)
 		if err != nil {
 			logger.Error("Post command", err)
 			utils.SendMessageToOwner(ctx, "Error al usar comando post")
@@ -137,9 +150,11 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		go tasks.ScheduleToBsky(bot, post)
-		go tasks.ScheduleToTelegram(bot, post)
-		go tasks.ScheduleToTwitter(bot, post)
+		go tasks.SchedulePost(model.Bluesky, bot, post, 20, 0)
+		go tasks.SchedulePost(model.Instagram, bot, post, 20, 0)
+		go tasks.SchedulePost(model.Telegram, bot, post, 20, 0)
+		go tasks.SchedulePost(model.Twitter, bot, post, 20, 0)
+
 		return nil
 	}, th.CommandEqual("post"))
 }

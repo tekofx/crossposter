@@ -33,24 +33,6 @@ func PostExistsInDatabase(bskyId string) bool {
 	return err == nil
 }
 
-func GetNewestPost() (*model.Post, *merrors.MError) {
-	var post model.Post
-
-	err := database.Database.
-		Order("created_at DESC").
-		Preload("Images"). // Load associated images (optional)
-		First(&post).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // No posts in the database
-		}
-		return nil, merrors.New(merrors.DatabaseErrorCode, err.Error())
-	}
-
-	return &post, nil
-}
-
 func GetPosts() ([]model.Post, *merrors.MError) {
 	var posts []model.Post
 

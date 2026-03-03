@@ -51,7 +51,13 @@ func (post *Post) String() string {
 		return fmt.Sprintf("❌ %s", service)
 	}
 
-	return fmt.Sprintf("ID: %d\nEstado: %s\n%s\n%s\n%s\n%s",
+	var msg string
+
+	if post.HasText {
+		msg += fmt.Sprintf("%s\n", post.Text)
+	}
+
+	msg += fmt.Sprintf("ID: %d\nEstado: %s\n%s\n%s\n%s\n%s",
 		post.ID,
 		post.Status.String(),
 		format(post.PublishedOnBsky, "Bluesky", post.BskyLink),
@@ -59,4 +65,6 @@ func (post *Post) String() string {
 		format(post.PublishedOnTelegram, "Telegram", post.TelegramLink),
 		format(post.PublishedOnTwitter, "Twitter", post.TwitterLink),
 	)
+
+	return msg
 }

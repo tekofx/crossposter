@@ -81,6 +81,9 @@ func postImagesToTwitter(post *model.Post) (*string, *merrors.MError) {
 			Shared:        false,
 			MediaCategory: mediaTypes.MediaCategoryTweetImage,
 		})
+		if err != nil {
+			return nil, err
+		}
 		mediaIds = append(mediaIds, res.Data.MediaID)
 		_, err = appendMediaUpload(twitterClient, &types.AppendInput{
 			MediaID:      res.Data.MediaID,

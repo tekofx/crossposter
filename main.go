@@ -17,6 +17,7 @@ import (
 func main() {
 
 	config.InitializeConfig()
+	tasks.Initialize()
 	//services.InitializeTelegram()
 	database.InitializeDb()
 

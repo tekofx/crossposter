@@ -10,6 +10,7 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/services/bsky"
 	"github.com/tekofx/crossposter/internal/services/twitter"
 	"github.com/tekofx/crossposter/internal/tasks"
 )
@@ -18,16 +19,15 @@ func main() {
 
 	config.InitializeConfig()
 	tasks.Initialize()
-	//services.InitializeTelegram()
 	database.InitializeDb()
 
-	// err := services.InitializeBluesky()
-	// if err != nil {
-	// 	logger.Fatal("Bluesky", err)
-	// }
-	err := twitter.InitializeTwitter()
+	err := bsky.Initialize()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal("Bluesky", err)
+	}
+	err = twitter.Initialize()
+	if err != nil {
+		logger.Fatal("Twitter", err)
 	}
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 
@@ -43,7 +43,7 @@ func main() {
 
 	// Create bot handler and specify from where to get updates
 	bh, botErr := th.NewBotHandler(bot, updates)
-	if err != nil {
+	if botErr != nil {
 		logger.Fatal(err)
 	}
 

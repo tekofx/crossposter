@@ -31,16 +31,17 @@ func SendMessageToOwner(ctx *th.Context, text string) *telego.Message {
 	return msg
 }
 
-func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) (*telego.Message, *merrors.MError) {
+func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) *telego.Message {
 	msg, err := bot.SendMessage(context.Background(), tu.Message(
 		tu.ID(int64(config.Conf.TelegramOwner)),
 		text,
 	))
 
 	if err != nil {
-		return nil, merrors.New(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error())
+		logger.Fatal(merrors.New(merrors.TelegramCannotSendMessageToOwnerErrorCode, err.Error()))
+		return nil
 	}
-	return msg, nil
+	return msg
 }
 
 func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {

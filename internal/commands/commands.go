@@ -139,8 +139,7 @@ func cancelCommand(bh *th.BotHandler, bot *telego.Bot) {
 		utils.SendMessageToOwner(ctx, "Post cancelado")
 
 		return nil
-	})
-
+	}, th.CommandEqual("cancelar"))
 }
 
 func postCommand(bh *th.BotHandler, bot *telego.Bot) {

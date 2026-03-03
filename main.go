@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -16,15 +15,6 @@ import (
 )
 
 func main() {
-
-	targetDate, duration := tasks.GetScheduledTime(12, 20)
-	remainingHours, remamainingMinutes := tasks.GetDuration(duration)
-	fmt.Println(remainingHours)
-	fmt.Println(remamainingMinutes)
-
-	fmt.Printf("Publicación en Telegram: %s (%d horas y %d minutos)", targetDate.Format("02-01-2006 15:04"), int(duration.Hours()), int(duration.Minutes()))
-
-	return
 
 	config.InitializeConfig()
 	//services.InitializeTelegram()

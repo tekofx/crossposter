@@ -75,7 +75,7 @@ func postImagesToTwitter(post *model.Post) (*string, *merrors.MError) {
 		if err != nil {
 			return nil, err
 		}
-		res, err := initialize(twitterClient, &mediaTypes.InitializeInput{
+		res, err := initializeMediaUpload(twitterClient, &mediaTypes.InitializeInput{
 			MediaType:     mediaTypes.MediaType(image.MimeType),
 			TotalBytes:    len(fileBytes),
 			Shared:        false,

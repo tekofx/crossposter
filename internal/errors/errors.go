@@ -41,7 +41,7 @@ const (
 
 	// 2100 -> 2199 | TWITTER ERRORS
 	TwitterClientCreationErrorCode          MErrorCode = 2100
-	TwitterInitializeErrorCode              MErrorCode = 2101
+	TwitterInitializeMediaErrorCode         MErrorCode = 2101
 	TwitterCannotPostTextErrorCode          MErrorCode = 2102
 	TwitterCannotAppendMediaUploadErrorCode MErrorCode = 2103
 	TwitterCannotFinalizeInputErrorCode     MErrorCode = 2104

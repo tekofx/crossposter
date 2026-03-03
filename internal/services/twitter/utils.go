@@ -11,10 +11,10 @@ import (
 	merrors "github.com/tekofx/crossposter/internal/errors"
 )
 
-func initialize(c *gotwi.Client, p *types.InitializeInput) (*types.InitializeOutput, *merrors.MError) {
+func initializeMediaUpload(c *gotwi.Client, p *types.InitializeInput) (*types.InitializeOutput, *merrors.MError) {
 	res, err := upload.Initialize(context.Background(), c, p)
 	if err != nil {
-		return nil, merrors.New(merrors.TwitterInitializeErrorCode, err.Error())
+		return nil, merrors.New(merrors.TwitterInitializeMediaErrorCode, err.Error())
 	}
 
 	return res, nil

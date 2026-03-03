@@ -19,7 +19,7 @@ import (
 
 var twitterClient *gotwi.Client
 
-func InitializeTwitter() *merrors.MError {
+func Initialize() *merrors.MError {
 	in := &gotwi.NewClientInput{
 		AuthenticationMethod: gotwi.AuthenMethodOAuth1UserContext,
 		OAuthToken:           config.Conf.TwitterAccessToken,

@@ -16,7 +16,7 @@ const (
 	loginUrl        = "https://bsky.social/xrpc/com.atproto.server.createSession"
 )
 
-func InitializeBluesky() *merrors.MError {
+func Initialize() *merrors.MError {
 	BskyClient = &BlueskyClient{Handle: config.Conf.BskyHandle, Password: config.Conf.BskyAppPassword}
 	if err := authenticate(); err != nil {
 		return err

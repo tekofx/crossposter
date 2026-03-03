@@ -70,10 +70,12 @@ func RemovePostById(postId int) *merrors.MError {
 
 func GetPostById(postId int) (*model.Post, *merrors.MError) {
 	var post model.Post
-	err := database.Database.Preload("Images").Find(&post, postId).Error
-	if err != nil {
-		return nil, merrors.New(merrors.DatabaseErrorCode, err.Error())
+	result := database.Database.Preload("Images").First(&post, postId)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, merrors.New(merrors.NotFoundErrorCode, "post not found")
+		}
+		return nil, merrors.New(merrors.DatabaseErrorCode, result.Error.Error())
 	}
-
 	return &post, nil
 }

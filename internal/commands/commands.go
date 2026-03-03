@@ -41,7 +41,6 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 
 func startCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-
 		utils.SendMessageToOwner(ctx, fmt.Sprintf("Hola %s! Usa /help para obtener info sobre mis comandos", update.Message.From.Username))
 		return nil
 	}, th.CommandEqual("start"))
@@ -134,12 +133,12 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		post, err := services.GetPostById(*num)
 		if err != nil {
+			if err.Code == merrors.NotFoundErrorCode {
+				utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
+				return nil
+			}
 			logger.Error("Post command", err)
 			utils.SendMessageToOwner(ctx, "Error al usar comando post")
-			return nil
-		}
-		if post == nil {
-			utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")
 			return nil
 		}
 

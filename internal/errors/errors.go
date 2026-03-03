@@ -46,6 +46,7 @@ const (
 	TwitterCannotAppendMediaUploadErrorCode MErrorCode = 2103
 	TwitterCannotFinalizeInputErrorCode     MErrorCode = 2104
 	TwitterCannotCreatePostErrorCode        MErrorCode = 2105
+	TwitterServiceUnavailableErrorCode      MErrorCode = 2106
 
 	// 2200 -> 2299 | INSTAGRAM ERRORS
 	InstagramUploadImageErrorCode MErrorCode = 2200

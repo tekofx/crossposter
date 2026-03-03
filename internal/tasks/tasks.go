@@ -88,6 +88,10 @@ func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post,
 
 		if err != nil {
 			logger.Error(social.String(), "Schedule", err)
+			if err.Code == merrors.TwitterServiceUnavailableErrorCode {
+				utils.SendMessageToOwnerUsingBot(bot, "Error al publicar en Twitter. Twitter no está disponible")
+				return
+			}
 			utils.SendMessageToOwnerUsingBot(bot, fmt.Sprintf("Error al publicar en %s", social.String()))
 			return
 		}

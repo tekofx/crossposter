@@ -2,6 +2,7 @@ package twitter
 
 import (
 	"context"
+	"strings"
 
 	"github.com/michimani/gotwi"
 	"github.com/michimani/gotwi/media/upload"
@@ -13,8 +14,11 @@ import (
 
 func initializeMediaUpload(c *gotwi.Client, p *types.InitializeInput) (*types.InitializeOutput, *merrors.MError) {
 	res, err := upload.Initialize(context.Background(), c, p)
-	// TODO: Implement custom error for httpStatus="503 Service Unavailable" httpStatusCode=503 title="Service Unavailable"
+
 	if err != nil {
+		if strings.Contains(err.Error(), "503 Service Unavailable") {
+			return nil, merrors.New(merrors.TwitterServiceUnavailableErrorCode, err.Error())
+		}
 		return nil, merrors.New(merrors.TwitterInitializeMediaErrorCode, err.Error())
 	}
 

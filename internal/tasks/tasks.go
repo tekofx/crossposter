@@ -51,7 +51,6 @@ func getScheduledTime(hour int, minute int) (time.Time, time.Duration) {
 }
 
 func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post, hour int, minute int) {
-
 	taskId := strconv.Itoa(int(post.ID)) + social.String()
 	tasksManager.StartTask(taskId, func(ctx context.Context) {
 		post.Status = types.Scheduled
@@ -59,7 +58,7 @@ func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post,
 
 		targetTime, duration := getScheduledTime(hour, minute)
 		// TODO: Remove before prod
-		duration = time.Second * 2
+		duration = time.Second * 10
 		logger.Log("Task", taskId, formatSchedule("Post Schedule", targetTime, duration))
 		utils.SendMessageToOwnerUsingBot(bot, formatSchedule(social.String(), targetTime, duration))
 		select {

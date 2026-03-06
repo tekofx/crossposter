@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	config.InitializeConfig()
+	config.Initialize()
 
 	tasks.Initialize()
 	database.InitializeDb()

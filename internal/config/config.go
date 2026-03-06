@@ -39,7 +39,7 @@ var lock = &sync.Mutex{}
 
 var Conf *Config
 
-func InitializeConfig() {
+func Initialize() {
 	if Conf == nil {
 		lock.Lock()
 		defer lock.Unlock()

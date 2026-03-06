@@ -2,6 +2,9 @@ package twitter
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/michimani/gotwi"
@@ -11,6 +14,24 @@ import (
 	mtTypes "github.com/michimani/gotwi/tweet/managetweet/types"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 )
+
+func formUrl(baseUrl string, pathParameters map[string]string) string {
+	// Sort keys
+	keys := make([]string, 0, len(pathParameters))
+	for k := range pathParameters {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Build parameter string
+	var parts []string
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(pathParameters[k])))
+	}
+	paramStr := strings.Join(parts, "&")
+
+	return fmt.Sprintf("%s?%s", baseUrl, paramStr)
+}
 
 func initializeMediaUpload(c *gotwi.Client, p *types.InitializeInput) (*types.InitializeOutput, *merrors.MError) {
 	res, err := upload.Initialize(context.Background(), c, p)

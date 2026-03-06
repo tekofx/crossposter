@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"sort"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 )
 
@@ -33,17 +35,60 @@ func sign(key, data string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func auth(petitionParameters map[string]string) (*string, error) {
-	// Endpoint
-	apiURL := "https://api.x.com/2/tweets"
+func auth1a() *merrors.MError {
 
-	parsedTime, err := time.Parse(http.TimeFormat, http.TimeFormat)
+	requestTokenURL := "https://api.x.com/oauth/request_token"
+	oauth_callback := "http://localhost:3000"
+	params := map[string]string{
+		"oauth_callback":     oauth_callback,
+		"oauth_consumer_key": config.Conf.TwitterConsumerKey,
+	}
+	// Make request
+	req, err := http.NewRequest(
+		"POST",
+		formUrl(requestTokenURL, params),
+		nil,
+	)
+	logger.Log("Auth1a URL", req.URL)
 	if err != nil {
-		fmt.Println("Error parsing time:", err)
-		return nil, err
+		logger.Error(err)
+		return merrors.New(merrors.DoRequestErrorCode, err.Error())
 	}
 
-	unixTimestamp := parsedTime.Unix()
+	authHeader, err := createAuthHeader(requestTokenURL, params)
+	req.Header.Set("Authorization", *authHeader)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error(err)
+		return merrors.New(merrors.DoRequestErrorCode, err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 201 {
+
+		return merrors.New(merrors.UnexpectedErrorCode, string(body))
+	}
+	return nil
+}
+
+// Signing Key is composed of <consumer_secret>&<oauth_token_secret>. When <oauth_token_secret> is yet unknown,
+// the signing key is only <consumer_secret>&
+func formSigningKey(oauthTokenSecret *string) string {
+	if oauthTokenSecret == nil {
+		return fmt.Sprintf("%s&", config.Conf.TwitterConsumerSecret)
+	}
+
+	return fmt.Sprintf("%s&%s", config.Conf.TwitterConsumerSecret, *oauthTokenSecret)
+}
+
+func createAuthHeader(apiUrl string, pathParameters map[string]string) (*string, error) {
+	// Endpoint
+
+	unixTimestamp := time.Now().Unix()
 
 	// OAuth 1.0a parameters
 	params := map[string]string{
@@ -51,41 +96,21 @@ func auth(petitionParameters map[string]string) (*string, error) {
 		"oauth_nonce":            generateNonce(),
 		"oauth_signature_method": "HMAC-SHA1",
 		"oauth_timestamp":        fmt.Sprintf("%d", unixTimestamp),
-		"oauth_token":            config.Conf.TwitterAccessSecret,
 		"oauth_version":          "1.0",
 	}
 
-	for k, v := range petitionParameters {
-		params[k] = v
-	}
-
-	// Sort keys
-	keys := make([]string, 0, len(params))
-	for k := range params {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	// Build parameter string
-	var parts []string
-	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(params[k])))
-	}
-	paramStr := strings.Join(parts, "&")
+	maps.Copy(params, pathParameters)
 
 	// Build base string
-	baseStr := fmt.Sprintf("POST&%s&%s",
-		url.QueryEscape(apiURL),
-		url.QueryEscape(paramStr),
-	)
+	baseStr := url.QueryEscape(formUrl(apiUrl, params))
 	logger.Log("Basestr", baseStr)
 
 	// Signing key
-	signingKey := url.QueryEscape(config.Conf.TwitterConsumerKey) + "&" + url.QueryEscape(config.Conf.TwitterAccessSecret)
+	signingKey := formSigningKey(nil)
 	logger.Log("Signing Key", signingKey)
 
 	// Generate signature
-	signature := sign("signingKey", baseStr)
+	signature := sign(signingKey, baseStr)
 	params["oauth_signature"] = signature
 
 	logger.Log("Signature", signature)
@@ -97,20 +122,27 @@ func auth(petitionParameters map[string]string) (*string, error) {
 	}
 	sort.Strings(authParts)
 	authHeader := "OAuth " + strings.Join(authParts, ", ")
-	logger.Log("OAuth", authHeader)
+	logger.Log(authHeader)
 
 	return &authHeader, nil
 }
 
-func postTweet(text string) {
+func PostTweet(text string) {
 	// Endpoint
-	apiURL := "https://api.x.com/2/tweets"
+	apiURL := "https://api.x.com/1.1/statuses/update.json?include_entities=true"
 
 	petitionParams := map[string]string{
-		"text": "test",
+		"status": "test",
 	}
 
-	authHeader, err := auth(petitionParams)
+	err2 := auth1a()
+	if err2 != nil {
+		logger.Fatal(err2)
+	}
+
+	return
+
+	authHeader, err := createAuthHeader(apiURL, petitionParams)
 	if err != nil {
 		logger.Error(err)
 		return

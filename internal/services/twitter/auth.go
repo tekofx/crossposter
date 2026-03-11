@@ -19,6 +19,39 @@ import (
 	"github.com/tekofx/crossposter/internal/logger"
 )
 
+type SignatureData struct {
+	HttpMethod          string
+	Url                 string
+	OauthConsumerKey    string
+	OauthConsumerSecret string
+	OauthNonce          string
+	OauthTimestamp      int
+	OauthToken          *string
+	OauthVersion        string
+	OtherData           map[string]string
+}
+
+func (s SignatureData) ToMap() map[string]string {
+	data := map[string]string{
+		"oauth_consumer_key":     s.OauthConsumerKey,
+		"oauth_nonce":            s.OauthNonce,
+		"oauth_signature_method": "HMAC-SHA1",
+		"oauth_timestamp":        string(s.OauthTimestamp),
+		"oauth_version":          s.OauthVersion,
+	}
+
+	if s.OauthToken != nil {
+		data["oauth_token"] = *s.OauthToken
+	}
+
+	for k, v := range s.OtherData {
+		data[k] = v
+	}
+
+	return data
+
+}
+
 func generateNonce() string {
 	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, 32)
@@ -55,7 +88,7 @@ func auth1a() *merrors.MError {
 		return merrors.New(merrors.DoRequestErrorCode, err.Error())
 	}
 
-	authHeader, err := createAuthHeader(requestTokenURL, params)
+	authHeader, err := createAuthHeader(requestTokenURL, "", params)
 	req.Header.Set("Authorization", *authHeader)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -77,22 +110,37 @@ func auth1a() *merrors.MError {
 
 // Signing Key is composed of <consumer_secret>&<oauth_token_secret>. When <oauth_token_secret> is yet unknown,
 // the signing key is only <consumer_secret>&
-func formSigningKey(oauthTokenSecret *string) string {
+func formSigningKey(twitterConsumerSecret string, oauthTokenSecret *string) string {
 	if oauthTokenSecret == nil {
-		return fmt.Sprintf("%s&", config.Conf.TwitterConsumerSecret)
+		return fmt.Sprintf("%s&", twitterConsumerSecret)
 	}
 
-	return fmt.Sprintf("%s&%s", config.Conf.TwitterConsumerSecret, *oauthTokenSecret)
+	return fmt.Sprintf("%s&%s", twitterConsumerSecret, *oauthTokenSecret)
 }
 
-func createAuthHeader(apiUrl string, pathParameters map[string]string) (*string, error) {
+func CreateSignature(signatureData SignatureData) string {
+	// Build base string
+	baseStr := url.QueryEscape(formUrl(signatureData.Url, signatureData.ToMap()))
+	logger.Log("Basestr", baseStr)
+
+	// Signing key
+	signingKey := formSigningKey(signatureData.OauthConsumerSecret, nil)
+	logger.Log("Signing Key", signingKey)
+
+	// Generate signature
+	signature := sign(signingKey, baseStr)
+
+	return signature
+}
+
+func createAuthHeader(apiUrl string, twitterConsumerKey string, pathParameters map[string]string) (*string, error) {
 	// Endpoint
 
 	unixTimestamp := time.Now().Unix()
 
 	// OAuth 1.0a parameters
 	params := map[string]string{
-		"oauth_consumer_key":     config.Conf.TwitterConsumerKey,
+		"oauth_consumer_key":     twitterConsumerKey,
 		"oauth_nonce":            generateNonce(),
 		"oauth_signature_method": "HMAC-SHA1",
 		"oauth_timestamp":        fmt.Sprintf("%d", unixTimestamp),
@@ -106,7 +154,7 @@ func createAuthHeader(apiUrl string, pathParameters map[string]string) (*string,
 	logger.Log("Basestr", baseStr)
 
 	// Signing key
-	signingKey := formSigningKey(nil)
+	signingKey := formSigningKey(twitterConsumerKey, nil)
 	logger.Log("Signing Key", signingKey)
 
 	// Generate signature
@@ -142,7 +190,7 @@ func PostTweet(text string) {
 
 	return
 
-	authHeader, err := createAuthHeader(apiURL, petitionParams)
+	authHeader, err := createAuthHeader(apiURL, "", petitionParams)
 	if err != nil {
 		logger.Error(err)
 		return

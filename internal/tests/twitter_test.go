@@ -10,7 +10,7 @@ import (
 var data = setupData()
 
 func setupData() twitter.SignatureData {
-	token := "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"
+	token := "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
 
 	signatureData := twitter.SignatureData{
 		HttpMethod:          "POST",
@@ -21,9 +21,11 @@ func setupData() twitter.SignatureData {
 		OauthNonce:          "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
 		OauthTimestamp:      1318622958,
 		OauthVersion:        "1.0",
-		OtherData: map[string]string{
+		PathParameters: map[string]string{
 			"include_entities": "true",
-			"status":           "Hello Ladies + Gentlemen, a signed OAuth request!",
+		},
+		BodyParameters: map[string]string{
+			"status": "Hello Ladies + Gentlemen, a signed OAuth request!",
 		},
 	}
 

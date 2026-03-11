@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,7 +29,6 @@ type SignatureData struct {
 	OauthTimestamp      int
 	OauthToken          *string
 	OauthVersion        string
-	OtherData           map[string]string
 	PathParameters      map[string]string
 	BodyParameters      map[string]string
 }
@@ -38,16 +38,12 @@ func (s SignatureData) ToMap() map[string]string {
 		"oauth_consumer_key":     s.OauthConsumerKey,
 		"oauth_nonce":            s.OauthNonce,
 		"oauth_signature_method": "HMAC-SHA1",
-		"oauth_timestamp":        string(s.OauthTimestamp),
+		"oauth_timestamp":        strconv.Itoa(s.OauthTimestamp),
 		"oauth_version":          s.OauthVersion,
 	}
 
 	if s.OauthToken != nil {
 		data["oauth_token"] = *s.OauthToken
-	}
-
-	for k, v := range s.OtherData {
-		data[k] = v
 	}
 
 	return data
@@ -112,12 +108,12 @@ func auth1a() *merrors.MError {
 
 // Signing Key is composed of <consumer_secret>&<oauth_token_secret>. When <oauth_token_secret> is yet unknown,
 // the signing key is only <consumer_secret>&
-func formSigningKey(twitterConsumerSecret string, oauthTokenSecret *string) string {
-	if oauthTokenSecret == nil {
-		return fmt.Sprintf("%s&", twitterConsumerSecret)
+func formSigningKey(data SignatureData) string {
+	if data.OauthToken == nil {
+		return fmt.Sprintf("%s&", data.OauthConsumerSecret)
 	}
 
-	return fmt.Sprintf("%s&%s", twitterConsumerSecret, *oauthTokenSecret)
+	return fmt.Sprintf("%s&%s", data.OauthConsumerSecret, *data.OauthToken)
 }
 
 func CreateSignatureBaseUrl(data SignatureData) string {
@@ -125,8 +121,17 @@ func CreateSignatureBaseUrl(data SignatureData) string {
 
 	// Build parameter string
 	var parts []string
-	for _, k := range dataMap {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(dataMap[k])))
+
+	for k, v := range data.PathParameters {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
+	}
+
+	for k, v := range dataMap {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
+	}
+
+	for k, v := range data.BodyParameters {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
 	}
 	sort.Strings(parts)
 
@@ -137,11 +142,11 @@ func CreateSignatureBaseUrl(data SignatureData) string {
 
 func CreateSignature(signatureData SignatureData) string {
 	// Build base string
-	baseStr := url.QueryEscape(formUrl(signatureData.Url, signatureData.ToMap()))
+	baseStr := CreateSignatureBaseUrl(signatureData)
 	logger.Log("Basestr", baseStr)
 
 	// Signing key
-	signingKey := formSigningKey(signatureData.OauthConsumerSecret, nil)
+	signingKey := formSigningKey(signatureData)
 	logger.Log("Signing Key", signingKey)
 
 	// Generate signature
@@ -171,25 +176,26 @@ func createAuthHeader(apiUrl string, twitterConsumerKey string, pathParameters m
 	logger.Log("Basestr", baseStr)
 
 	// Signing key
-	signingKey := formSigningKey(twitterConsumerKey, nil)
-	logger.Log("Signing Key", signingKey)
+	return nil, nil
+	// signingKey := formSigningKey()
+	// logger.Log("Signing Key", signingKey)
 
-	// Generate signature
-	signature := sign(signingKey, baseStr)
-	params["oauth_signature"] = signature
+	// // Generate signature
+	// signature := sign(signingKey, baseStr)
+	// params["oauth_signature"] = signature
 
-	logger.Log("Signature", signature)
+	// logger.Log("Signature", signature)
 
-	// Build Authorization header
-	var authParts []string
-	for k, v := range params {
-		authParts = append(authParts, fmt.Sprintf(`%s="%s"`, k, url.QueryEscape(v)))
-	}
-	sort.Strings(authParts)
-	authHeader := "OAuth " + strings.Join(authParts, ", ")
-	logger.Log(authHeader)
+	// // Build Authorization header
+	// var authParts []string
+	// for k, v := range params {
+	// 	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, k, url.QueryEscape(v)))
+	// }
+	// sort.Strings(authParts)
+	// authHeader := "OAuth " + strings.Join(authParts, ", ")
+	// logger.Log(authHeader)
 
-	return &authHeader, nil
+	// return &authHeader, nil
 }
 
 func PostTweet(text string) {

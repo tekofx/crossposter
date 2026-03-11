@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"maps"
 	"net/http"
 	"net/url"
 	"sort"
@@ -26,10 +25,11 @@ type SignatureData struct {
 	OauthConsumerKey    string
 	OauthConsumerSecret string
 	OauthNonce          string
-	OauthTimestamp      int
+	OauthTimestamp      int64
 	OauthToken          *string
 	OauthTokenSecret    *string
 	OauthVersion        string
+	Signature           string
 	PathParameters      map[string]string
 	BodyParameters      map[string]string
 }
@@ -39,7 +39,7 @@ func (s SignatureData) ToMap() map[string]string {
 		"oauth_consumer_key":     s.OauthConsumerKey,
 		"oauth_nonce":            s.OauthNonce,
 		"oauth_signature_method": "HMAC-SHA1",
-		"oauth_timestamp":        strconv.Itoa(s.OauthTimestamp),
+		"oauth_timestamp":        strconv.FormatInt(s.OauthTimestamp, 10),
 		"oauth_version":          s.OauthVersion,
 	}
 
@@ -71,14 +71,27 @@ func auth1a() *merrors.MError {
 
 	requestTokenURL := "https://api.x.com/oauth/request_token"
 	oauth_callback := "http://localhost:3000"
-	params := map[string]string{
+	pathParams := map[string]string{
 		"oauth_callback":     oauth_callback,
 		"oauth_consumer_key": config.Conf.TwitterConsumerKey,
 	}
+	signatureData := SignatureData{
+		HttpMethod:          "POST",
+		Url:                 requestTokenURL,
+		OauthConsumerKey:    config.Conf.TwitterConsumerKey,
+		OauthConsumerSecret: config.Conf.TwitterConsumerSecret,
+		OauthToken:          nil,
+		OauthTokenSecret:    nil,
+		OauthNonce:          generateNonce(),
+		OauthTimestamp:      time.Now().Unix(),
+		OauthVersion:        "1.0",
+		PathParameters:      map[string]string{},
+	}
+
 	// Make request
 	req, err := http.NewRequest(
 		"POST",
-		formUrl(requestTokenURL, params),
+		formUrl(requestTokenURL, pathParams),
 		nil,
 	)
 	logger.Log("Auth1a URL", req.URL)
@@ -87,7 +100,7 @@ func auth1a() *merrors.MError {
 		return merrors.New(merrors.DoRequestErrorCode, err.Error())
 	}
 
-	authHeader, err := createAuthHeader(requestTokenURL, "", params)
+	authHeader, err := CreateAuthHeader(signatureData)
 	req.Header.Set("Authorization", *authHeader)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -156,56 +169,43 @@ func CreateSignature(signatureData SignatureData) string {
 	return signature
 }
 
-func createAuthHeader(apiUrl string, twitterConsumerKey string, pathParameters map[string]string) (*string, error) {
-	// Endpoint
-
-	unixTimestamp := time.Now().Unix()
-
-	// OAuth 1.0a parameters
-	params := map[string]string{
-		"oauth_consumer_key":     twitterConsumerKey,
-		"oauth_nonce":            generateNonce(),
-		"oauth_signature_method": "HMAC-SHA1",
-		"oauth_timestamp":        fmt.Sprintf("%d", unixTimestamp),
-		"oauth_version":          "1.0",
-	}
-
-	maps.Copy(params, pathParameters)
+func CreateAuthHeader(signatureData SignatureData) (*string, error) {
 
 	// Build base string
-	baseStr := url.QueryEscape(formUrl(apiUrl, params))
+	baseStr := CreateSignatureBaseUrl(signatureData)
 	logger.Log("Basestr", baseStr)
 
 	// Signing key
-	return nil, nil
-	// signingKey := formSigningKey()
-	// logger.Log("Signing Key", signingKey)
+	signingKey := formSigningKey(signatureData)
+	logger.Log("Signing Key", signingKey)
 
-	// // Generate signature
-	// signature := sign(signingKey, baseStr)
-	// params["oauth_signature"] = signature
+	// Generate signature
+	signature := sign(signingKey, baseStr)
+	signatureData.Signature = signature
+	logger.Log("Signature", signature)
 
-	// logger.Log("Signature", signature)
+	// Build Authorization header
+	var authParts []string
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_consumer_key", signatureData.OauthConsumerKey))
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_nonce", signatureData.OauthNonce))
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_signature", url.QueryEscape(signature)))
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_signature_method", "HMAC-SHA1"))
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_timestamp", strconv.FormatInt(signatureData.OauthTimestamp, 10)))
+	if signatureData.OauthToken != nil {
+		authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_token", *signatureData.OauthToken))
+	}
+	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, "oauth_version", signatureData.OauthVersion))
 
-	// // Build Authorization header
-	// var authParts []string
-	// for k, v := range params {
-	// 	authParts = append(authParts, fmt.Sprintf(`%s="%s"`, k, url.QueryEscape(v)))
-	// }
-	// sort.Strings(authParts)
-	// authHeader := "OAuth " + strings.Join(authParts, ", ")
-	// logger.Log(authHeader)
+	sort.Strings(authParts)
+	authHeader := "OAuth " + strings.Join(authParts, ", ")
+	logger.Log(authHeader)
 
-	// return &authHeader, nil
+	return &authHeader, nil
 }
 
 func PostTweet(text string) {
-	// Endpoint
-	apiURL := "https://api.x.com/1.1/statuses/update.json?include_entities=true"
-
-	petitionParams := map[string]string{
-		"status": "test",
-	}
+	//Endpoint
+	//apiURL := "https://api.x.com/1.1/statuses/update.json?include_entities=true"
 
 	err2 := auth1a()
 	if err2 != nil {
@@ -214,40 +214,40 @@ func PostTweet(text string) {
 
 	return
 
-	authHeader, err := createAuthHeader(apiURL, "", petitionParams)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	logger.Log(authHeader)
+	// authHeader, err := CreateAuthHeader(apiURL, "", petitionParams)
+	// if err != nil {
+	// 	logger.Error(err)
+	// 	return
+	// }
+	// logger.Log(authHeader)
 
-	// JSON payload
-	payload := fmt.Sprintf(`{"text":"%s"}`, text)
+	// // JSON payload
+	// payload := fmt.Sprintf(`{"text":"%s"}`, text)
 
-	// Make request
-	req, err := http.NewRequest("POST", apiURL, strings.NewReader(payload))
-	if err != nil {
-		logger.Error(err)
-		return
-	}
+	// // Make request
+	// req, err := http.NewRequest("POST", apiURL, strings.NewReader(payload))
+	// if err != nil {
+	// 	logger.Error(err)
+	// 	return
+	// }
 
-	req.Header.Set("Authorization", *authHeader)
-	req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("Authorization", *authHeader)
+	// req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	defer resp.Body.Close()
+	// client := &http.Client{}
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	logger.Error(err)
+	// 	return
+	// }
+	// defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != 201 {
-		logger.Error(fmt.Errorf("failed to post tweet: %d %s", resp.StatusCode, string(body)))
-		return
-	}
+	// body, _ := io.ReadAll(resp.Body)
+	// if resp.StatusCode != 201 {
+	// 	logger.Error(fmt.Errorf("failed to post tweet: %d %s", resp.StatusCode, string(body)))
+	// 	return
+	// }
 
-	fmt.Printf("Tweet posted: %s\n", string(body))
+	// fmt.Printf("Tweet posted: %s\n", string(body))
 
 }

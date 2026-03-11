@@ -28,6 +28,7 @@ type SignatureData struct {
 	OauthNonce          string
 	OauthTimestamp      int
 	OauthToken          *string
+	OauthTokenSecret    *string
 	OauthVersion        string
 	PathParameters      map[string]string
 	BodyParameters      map[string]string
@@ -109,11 +110,11 @@ func auth1a() *merrors.MError {
 // Signing Key is composed of <consumer_secret>&<oauth_token_secret>. When <oauth_token_secret> is yet unknown,
 // the signing key is only <consumer_secret>&
 func formSigningKey(data SignatureData) string {
-	if data.OauthToken == nil {
+	if data.OauthTokenSecret == nil {
 		return fmt.Sprintf("%s&", data.OauthConsumerSecret)
 	}
 
-	return fmt.Sprintf("%s&%s", data.OauthConsumerSecret, *data.OauthToken)
+	return fmt.Sprintf("%s&%s", data.OauthConsumerSecret, *data.OauthTokenSecret)
 }
 
 func CreateSignatureBaseUrl(data SignatureData) string {
@@ -123,11 +124,11 @@ func CreateSignatureBaseUrl(data SignatureData) string {
 	var parts []string
 
 	for k, v := range data.PathParameters {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	for k, v := range dataMap {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	for k, v := range data.BodyParameters {
@@ -137,7 +138,7 @@ func CreateSignatureBaseUrl(data SignatureData) string {
 
 	paramStr := strings.Join(parts, "&")
 
-	return fmt.Sprintf("%s&%s&%s", data.HttpMethod, url.QueryEscape(data.Url), url.QueryEscape(paramStr))
+	return fmt.Sprintf("%s&%s&%s", data.HttpMethod, url.QueryEscape(data.Url), strings.ReplaceAll(url.QueryEscape(paramStr), "%2B", "%2520"))
 }
 
 func CreateSignature(signatureData SignatureData) string {

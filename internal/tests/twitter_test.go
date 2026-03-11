@@ -10,14 +10,16 @@ import (
 var data = setupData()
 
 func setupData() twitter.SignatureData {
-	token := "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
+	oauthToken := "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"
+	oauthTokenSecret := "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
 
 	signatureData := twitter.SignatureData{
 		HttpMethod:          "POST",
 		Url:                 "https://api.x.com/1.1/statuses/update.json",
 		OauthConsumerKey:    "xvz1evFS4wEEPTGEFPHBog",
 		OauthConsumerSecret: "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw",
-		OauthToken:          &token,
+		OauthToken:          &oauthToken,
+		OauthTokenSecret:    &oauthTokenSecret,
 		OauthNonce:          "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
 		OauthTimestamp:      1318622958,
 		OauthVersion:        "1.0",

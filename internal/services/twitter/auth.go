@@ -29,6 +29,8 @@ type SignatureData struct {
 	OauthToken          *string
 	OauthVersion        string
 	OtherData           map[string]string
+	PathParameters      map[string]string
+	BodyParameters      map[string]string
 }
 
 func (s SignatureData) ToMap() map[string]string {
@@ -116,6 +118,21 @@ func formSigningKey(twitterConsumerSecret string, oauthTokenSecret *string) stri
 	}
 
 	return fmt.Sprintf("%s&%s", twitterConsumerSecret, *oauthTokenSecret)
+}
+
+func CreateSignatureBaseUrl(data SignatureData) string {
+	dataMap := data.ToMap()
+
+	// Build parameter string
+	var parts []string
+	for _, k := range dataMap {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, url.QueryEscape(dataMap[k])))
+	}
+	sort.Strings(parts)
+
+	paramStr := strings.Join(parts, "&")
+
+	return fmt.Sprintf("%s&%s&%s", data.HttpMethod, url.QueryEscape(data.Url), url.QueryEscape(paramStr))
 }
 
 func CreateSignature(signatureData SignatureData) string {

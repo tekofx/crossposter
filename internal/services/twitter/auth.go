@@ -157,11 +157,9 @@ func CreateSignatureBaseUrl(data SignatureData) string {
 func CreateSignature(signatureData SignatureData) string {
 	// Build base string
 	baseStr := CreateSignatureBaseUrl(signatureData)
-	logger.Log("Basestr", baseStr)
 
 	// Signing key
 	signingKey := formSigningKey(signatureData)
-	logger.Log("Signing Key", signingKey)
 
 	// Generate signature
 	signature := sign(signingKey, baseStr)
@@ -173,16 +171,13 @@ func CreateAuthHeader(signatureData SignatureData) (*string, error) {
 
 	// Build base string
 	baseStr := CreateSignatureBaseUrl(signatureData)
-	logger.Log("Basestr", baseStr)
 
 	// Signing key
 	signingKey := formSigningKey(signatureData)
-	logger.Log("Signing Key", signingKey)
 
 	// Generate signature
 	signature := sign(signingKey, baseStr)
 	signatureData.Signature = signature
-	logger.Log("Signature", signature)
 
 	// Build Authorization header
 	var authParts []string
@@ -198,7 +193,6 @@ func CreateAuthHeader(signatureData SignatureData) (*string, error) {
 
 	sort.Strings(authParts)
 	authHeader := "OAuth " + strings.Join(authParts, ", ")
-	logger.Log(authHeader)
 
 	return &authHeader, nil
 }

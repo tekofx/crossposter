@@ -10,9 +10,7 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/handlers"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/model"
 	"github.com/tekofx/crossposter/internal/services/bsky"
-	"github.com/tekofx/crossposter/internal/services/twitter"
 	"github.com/tekofx/crossposter/internal/tasks"
 )
 
@@ -22,27 +20,9 @@ func main() {
 	tasks.Initialize()
 	database.InitializeDb()
 
-	twitter.PostTweet("hola")
-	return
-
-	err := twitter.Initialize()
-	if err != nil {
-		logger.Fatal("Twitter", err)
-	}
-
-	_, err = twitter.PostToTwitter(&model.Post{Text: "Test"})
-	if err != nil {
-		logger.Error(err)
-	}
-	return
-
-	err = bsky.Initialize()
+	err := bsky.Initialize()
 	if err != nil {
 		logger.Fatal("Bluesky", err)
-	}
-	err = twitter.Initialize()
-	if err != nil {
-		logger.Fatal("Twitter", err)
 	}
 	bot, botErr := telego.NewBot(config.Conf.TelegramBotToken)
 

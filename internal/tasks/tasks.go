@@ -14,7 +14,6 @@ import (
 	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/services/bsky"
 	"github.com/tekofx/crossposter/internal/services/telegram"
-	"github.com/tekofx/crossposter/internal/services/twitter"
 	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
 )
@@ -81,8 +80,6 @@ func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post,
 			//err = instagram.PostToInstagram(post)
 		case types.Telegram:
 			postLink, err = telegram.PostToTelegramChannel(bot, post)
-		case types.Twitter:
-			postLink, err = twitter.PostToTwitter(post)
 		}
 
 		if err != nil {

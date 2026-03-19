@@ -178,7 +178,6 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 		go tasks.SchedulePost(types.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
 		//go tasks.SchedulePost(types.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
 		go tasks.SchedulePost(types.Telegram, bot, post, 11, 55)
-		go tasks.SchedulePost(types.Twitter, bot, post, config.Conf.TwitterPostHour, 0)
 
 		return nil
 	}, th.CommandEqual("post"))

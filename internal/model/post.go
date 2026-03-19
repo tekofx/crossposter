@@ -18,12 +18,10 @@ type Post struct {
 	PublishedOnBsky      bool
 	PublishedOnInstagram bool
 	PublishedOnTelegram  bool
-	PublishedOnTwitter   bool
 
 	BskyLink      string
 	InstagramLink string
 	TelegramLink  string
-	TwitterLink   string
 
 	// Meta
 	CreatedAt time.Time `gorm:"type:DATE;"`
@@ -52,7 +50,6 @@ func (post *Post) String() string {
 		format(post.PublishedOnBsky, "Bluesky", post.BskyLink),
 		format(post.PublishedOnInstagram, "Instagram", post.BskyLink),
 		format(post.PublishedOnTelegram, "Telegram", post.TelegramLink),
-		format(post.PublishedOnTwitter, "Twitter", post.TwitterLink),
 	)
 
 	return msg

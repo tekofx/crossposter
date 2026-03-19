@@ -16,11 +16,10 @@ import (
 
 func main() {
 	config.Initialize()
-	tasks.Initialize()
 	database.InitializeDb()
 	services.Initialize()
+	tasks.Initialize()
 	startBot()
-
 }
 
 func startBot() {

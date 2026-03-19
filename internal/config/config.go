@@ -11,25 +11,20 @@ import (
 
 type Config struct {
 	// Bluesky
+	BskyEnabled     bool
 	BskyHandle      string
 	BskyAppPassword string
 	BskyPostHour    int
 
 	// Telegram
+	TelegramEnabled   bool
 	TelegramBotToken  string
 	TelegramChannelId int
 	TelegramOwner     int
 	TelegramPostHour  int
 
-	// Twitter
-	TwitterUsername       string
-	TwitterConsumerKey    string
-	TwitterConsumerSecret string
-	TwitterAccessToken    string
-	TwitterAccessSecret   string
-	TwitterPostHour       int
-
 	// Instagram
+	InstagramEnabled     bool
 	InstagramUserId      string
 	InstagramAccessToken string
 	InstagramPostHour    int
@@ -59,9 +54,9 @@ func Initialize() {
 	}
 }
 
-func getIntEnvVariable(name string) int {
+func getIntEnvVariable(name string, required bool) int {
 	envVar := os.Getenv(name)
-	if envVar == "" {
+	if envVar == "" && required {
 		logger.Fatal("Env variable %s required", name)
 	}
 
@@ -73,9 +68,9 @@ func getIntEnvVariable(name string) int {
 	return intValue
 }
 
-func getStringEnvVariable(name string) string {
+func getStringEnvVariable(name string, required bool) string {
 	envVar := os.Getenv(name)
-	if envVar == "" {
+	if envVar == "" && required {
 		logger.Fatal("Env variable %s required", name)
 	}
 
@@ -88,30 +83,38 @@ func GetConfig() *Config {
 		logger.Error("Error loading .env file")
 	}
 
-	return &Config{
+	config := Config{
 		// Bluesky
-		BskyHandle:      getStringEnvVariable("BSKY_HANDLE"),
-		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD"),
-		BskyPostHour:    getIntEnvVariable("BSKY_POST_HOUR"),
+		BskyHandle:      getStringEnvVariable("BSKY_HANDLE", true),
+		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD", true),
+		BskyPostHour:    getIntEnvVariable("BSKY_POST_HOUR", true),
 
-		// Telegram
-		TelegramBotToken:  getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
-		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID"),
-		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER"),
-		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR"),
+		// Telegram Bot
+		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN", false),
 
-		// Twitter
-		TwitterUsername:       getStringEnvVariable("TWITTER_USERNAME"),
-		TwitterConsumerKey:    getStringEnvVariable("TWITTER_CONSUMER_KEY"),
-		TwitterConsumerSecret: getStringEnvVariable("TWITTER_CONSUMER_SECRET"),
-		TwitterAccessToken:    getStringEnvVariable("TWITTER_ACCESS_TOKEN"),
-		TwitterAccessSecret:   getStringEnvVariable("TWITTER_ACCESS_SECRET"),
-		TwitterPostHour:       getIntEnvVariable("TWITTER_POST_HOUR"),
+		// Telegram Channel
+		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID", false),
+		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER", false),
+		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR", false),
 
 		// Instagram
-		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID"),
-		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN"),
-		InstagramPostHour:    getIntEnvVariable("INSTAGRAM_POST_HOUR"),
+		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID", false),
+		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN", false),
+		InstagramPostHour:    getIntEnvVariable("INSTAGRAM_POST_HOUR", false),
 	}
+
+	if config.BskyHandle != "" && config.BskyAppPassword != "" {
+		config.BskyEnabled = true
+	}
+
+	if config.TelegramBotToken != "" && config.TelegramChannelId != 0 && config.TelegramOwner != 0 {
+		config.TelegramEnabled = true
+	}
+
+	if config.InstagramAccessToken != "" && config.InstagramUserId != "" && config.InstagramPostHour != 0 {
+		config.InstagramEnabled = true
+	}
+
+	return &config
 
 }

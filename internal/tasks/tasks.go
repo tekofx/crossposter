@@ -8,12 +8,12 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
-	"github.com/tekofx/crossposter/internal/services"
-	"github.com/tekofx/crossposter/internal/services/bsky"
-	"github.com/tekofx/crossposter/internal/services/telegram"
+	"github.com/tekofx/crossposter/internal/services/socials/bsky"
+	"github.com/tekofx/crossposter/internal/services/socials/telegram"
 	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
 )
@@ -53,7 +53,7 @@ func SchedulePost(social types.SocialNetWork, bot *telego.Bot, post *model.Post,
 	taskId := strconv.Itoa(int(post.ID)) + social.String()
 	tasksManager.StartTask(taskId, func(ctx context.Context) {
 		post.Status = types.Scheduled
-		services.UpdatePost(post)
+		database.UpdatePost(post)
 
 		targetTime, duration := getScheduledTime(hour, minute)
 		// TODO: Remove before prod
@@ -104,7 +104,7 @@ func GetAllTasks() string {
 
 // Checks if the post on database have been posted. If ncoot, schedule it
 func CheckUnpostedPosts(bot *telego.Bot) {
-	posts, err := services.GetPosts()
+	posts, err := database.GetPosts()
 	if err != nil {
 		logger.Error("CheckUnpostedPost", err)
 		return
@@ -131,9 +131,6 @@ func CheckUnpostedPosts(bot *telego.Bot) {
 			SchedulePost(types.Telegram, bot, &post, config.Conf.TelegramPostHour, 0)
 		}
 
-		if !post.PublishedOnTwitter {
-			SchedulePost(types.Twitter, bot, &post, config.Conf.TwitterPostHour, 0)
-		}
 	}
 
 }
@@ -141,10 +138,10 @@ func CheckUnpostedPosts(bot *telego.Bot) {
 // If post have been posted to all socials, remove it from database
 func checkToRemovePost(bot *telego.Bot, post *model.Post) {
 
-	if post.PublishedOnBsky && post.PublishedOnTelegram && post.PublishedOnTwitter {
+	if post.PublishedOnBsky && post.PublishedOnTelegram {
 		utils.SendMessageToOwnerUsingBot(bot, "Se ha publicado el post en todas las redes sociales. Eliminado de la cola.")
 
-		err := services.RemovePost(post)
+		err := database.RemovePost(post)
 		if err != nil {
 			logger.Error("checkToRemovePost", "Could not remove post from database", err)
 		}

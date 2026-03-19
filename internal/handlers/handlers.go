@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/mymmrac/telego"
+	"github.com/tekofx/crossposter/internal/database"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
-	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/utils"
 
 	th "github.com/mymmrac/telego/telegohandler"
@@ -24,7 +24,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessageToOwner(ctx, "Envía el archivo como imagen")
 			return nil
 		}
-		post := services.CreatePost()
+		post := database.CreatePost()
 
 		if len(update.Message.Photo) > 0 {
 			photoLen := len(update.Message.Photo)
@@ -49,7 +49,7 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			post.HasText = true
 		}
 
-		err := services.UpdatePost(post)
+		err := database.UpdatePost(post)
 		if err != nil {
 			logger.Error(err)
 		}

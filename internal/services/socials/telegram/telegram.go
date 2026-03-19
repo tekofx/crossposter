@@ -7,10 +7,10 @@ import (
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
-	"github.com/tekofx/crossposter/internal/services"
 )
 
 func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, *merrors.MError) {
@@ -28,7 +28,7 @@ func PostToTelegramChannel(bot *telego.Bot, post *model.Post) (*string, *merrors
 
 	post.TelegramLink = *postLink
 	post.PublishedOnTelegram = true
-	err = services.UpdatePost(post)
+	err = database.UpdatePost(post)
 	if err != nil {
 		logger.Error(err)
 	}

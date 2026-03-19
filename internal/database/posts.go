@@ -1,9 +1,8 @@
-package services
+package database
 
 import (
 	"errors"
 
-	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/model"
 	"gorm.io/gorm"
@@ -11,12 +10,12 @@ import (
 
 func CreatePost() *model.Post {
 	var post model.Post
-	database.Database.Create(&post)
+	Database.Create(&post)
 	return &post
 }
 
 func UpdatePost(post *model.Post) *merrors.MError {
-	result := database.Database.Save(post)
+	result := Database.Save(post)
 
 	if result.Error != nil {
 		return merrors.New(merrors.UpdatePostErrorCode, result.Error.Error())
@@ -26,7 +25,7 @@ func UpdatePost(post *model.Post) *merrors.MError {
 }
 func PostExistsInDatabase(bskyId string) bool {
 	var post model.Post
-	err := database.Database.
+	err := Database.
 		Where("bsky_id = ?", bskyId).
 		First(&post).
 		Error
@@ -36,7 +35,7 @@ func PostExistsInDatabase(bskyId string) bool {
 func GetPosts() ([]model.Post, *merrors.MError) {
 	var posts []model.Post
 
-	err := database.Database.
+	err := Database.
 		Order("created_at DESC").
 		Preload("Images"). // Load associated images (optional)
 		Find(&posts).Error
@@ -52,7 +51,7 @@ func GetPosts() ([]model.Post, *merrors.MError) {
 }
 
 func RemovePost(post *model.Post) *merrors.MError {
-	err := database.Database.Delete(post)
+	err := Database.Delete(post)
 	if err.Error != nil {
 		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
 	}
@@ -61,7 +60,7 @@ func RemovePost(post *model.Post) *merrors.MError {
 }
 
 func RemovePostById(postId int) *merrors.MError {
-	err := database.Database.Delete(&model.Post{}, postId)
+	err := Database.Delete(&model.Post{}, postId)
 	if err.Error != nil {
 		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
 	}
@@ -70,7 +69,7 @@ func RemovePostById(postId int) *merrors.MError {
 
 func GetPostById(postId int) (*model.Post, *merrors.MError) {
 	var post model.Post
-	result := database.Database.Preload("Images").First(&post, postId)
+	result := Database.Preload("Images").First(&post, postId)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, merrors.New(merrors.NotFoundErrorCode, "post not found")

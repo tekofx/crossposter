@@ -9,9 +9,9 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/tekofx/crossposter/internal/config"
+	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/tasks"
 	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
@@ -63,7 +63,7 @@ func deletePostCommand(bh *th.BotHandler) {
 			return nil
 		}
 
-		err = services.RemovePostById(*num)
+		err = database.RemovePostById(*num)
 		if err != nil {
 			utils.SendMessageToOwner(ctx, "No se ha podido eliminar el post debido a un error")
 			logger.Error("Delete Command", err)
@@ -76,7 +76,7 @@ func deletePostCommand(bh *th.BotHandler) {
 
 func queueCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		posts, err := services.GetPosts()
+		posts, err := database.GetPosts()
 		if err != nil {
 			logger.Error("Queue command", err)
 			return nil
@@ -133,9 +133,9 @@ func cancelCommand(bh *th.BotHandler, bot *telego.Bot) {
 		}
 
 		tasks.StopTasksOfPost(*num)
-		post, _ := services.GetPostById(*num)
+		post, _ := database.GetPostById(*num)
 		post.Status = types.Created
-		services.UpdatePost(post)
+		database.UpdatePost(post)
 		utils.SendMessageToOwner(ctx, "Post cancelado")
 
 		return nil
@@ -156,7 +156,7 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 			return nil
 		}
 
-		post, err := services.GetPostById(*num)
+		post, err := database.GetPostById(*num)
 		if err != nil {
 			if err.Code == merrors.NotFoundErrorCode {
 				utils.SendMessageToOwner(ctx, "No se ha enviado contenido para publicar.")

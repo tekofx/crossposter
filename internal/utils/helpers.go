@@ -79,7 +79,7 @@ func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 	keyboard := tu.InlineKeyboard(
 		tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton("Editar").WithCallbackData("edit"),
-			tu.InlineKeyboardButton("Borrar").WithCallbackData("delete"),
+			tu.InlineKeyboardButton("Borrar").WithCallbackData(fmt.Sprintf("delete:%d", post.ID)),
 		),
 	)
 

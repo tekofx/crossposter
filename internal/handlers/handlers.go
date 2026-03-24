@@ -61,7 +61,6 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 }
 
 func onKeyboardPress(bh *th.BotHandler) {
-
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
 		ctx.Bot().SendMessage(ctx, tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), "Pulsaste Editar"))
 		ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))

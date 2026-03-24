@@ -45,45 +45,35 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) *telego.Message {
 }
 
 func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
-	var media []telego.InputMedia
+	if post.HasImages {
+		var media []telego.InputMedia
+		for _, image := range post.Images {
+			downloadedImage, err := os.Open(image.Filename)
+			if err != nil {
+				return merrors.New(merrors.CannotReadFileErrorCode, err.Error())
+			}
+			defer downloadedImage.Close()
 
-	text := post.String()
+			inputFile := telego.InputFile{
+				File: downloadedImage,
+			}
 
-	if !post.HasImages {
-		SendMessageToOwner(ctx, text)
-		return nil
-	}
+			photo := &telego.InputMediaPhoto{
+				Type:  "photo",
+				Media: inputFile,
+			}
+			media = append(media, photo)
+		}
 
-	for i, image := range post.Images {
+		mediaGroup := telego.SendMediaGroupParams{
+			ChatID: telego.ChatID{ID: int64(config.Conf.TelegramOwner)},
+			Media:  media,
+		}
 
-		downloadedImage, err := os.Open(image.Filename)
+		_, err := ctx.Bot().SendMediaGroup(context.Background(), &mediaGroup)
 		if err != nil {
-			return merrors.New(merrors.CannotReadFileErrorCode, err.Error())
+			return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 		}
-		defer downloadedImage.Close()
-
-		inputFile := telego.InputFile{
-			File: downloadedImage,
-		}
-
-		photo := &telego.InputMediaPhoto{
-			Type:  "photo",
-			Media: inputFile,
-		}
-		if i == 0 {
-			photo.Caption = text
-		}
-		media = append(media, photo)
-	}
-
-	mediaGroup := telego.SendMediaGroupParams{
-		ChatID: telego.ChatID{ID: int64(config.Conf.TelegramOwner)},
-		Media:  media,
-	}
-
-	_, err := ctx.Bot().SendMediaGroup(context.Background(), &mediaGroup)
-	if err != nil {
-		return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 	}
 
 	keyboard := tu.InlineKeyboard(
@@ -93,8 +83,7 @@ func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 		),
 	)
 
-	msg := tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), "Acciones")
-
+	msg := tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), post.String())
 	msg.ReplyMarkup = keyboard
 	ctx.Bot().SendMessage(ctx, msg)
 

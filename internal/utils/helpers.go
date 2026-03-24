@@ -76,15 +76,28 @@ func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 		media = append(media, photo)
 	}
 
-	params := telego.SendMediaGroupParams{
+	mediaGroup := telego.SendMediaGroupParams{
 		ChatID: telego.ChatID{ID: int64(config.Conf.TelegramOwner)},
 		Media:  media,
 	}
 
-	_, err := ctx.Bot().SendMediaGroup(context.Background(), &params)
+	_, err := ctx.Bot().SendMediaGroup(context.Background(), &mediaGroup)
 	if err != nil {
 		return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 	}
+
+	keyboard := tu.InlineKeyboard(
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton("Editar").WithCallbackData("edit"),
+			tu.InlineKeyboardButton("Borrar").WithCallbackData("delete"),
+		),
+	)
+
+	msg := tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), "Acciones")
+
+	msg.ReplyMarkup = keyboard
+	ctx.Bot().SendMessage(ctx, msg)
+
 	return nil
 }
 

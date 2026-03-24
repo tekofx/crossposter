@@ -28,7 +28,7 @@ var commands = []telego.BotCommand{
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	postCommand(bh, bot)
 	helpCommand(bh)
-	queueCommand(bh)
+	queueCommand(bh, bot)
 	deletePostCommand(bh)
 	startCommand(bh)
 	cancelCommand(bh, bot)
@@ -74,7 +74,7 @@ func deletePostCommand(bh *th.BotHandler) {
 	}, th.CommandEqual("borrar"))
 }
 
-func queueCommand(bh *th.BotHandler) {
+func queueCommand(bh *th.BotHandler, bot *telego.Bot) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		posts, err := database.GetPosts()
 		if err != nil {
@@ -88,7 +88,7 @@ func queueCommand(bh *th.BotHandler) {
 		utils.SendMessageToOwner(ctx, "Obteniendo posts")
 
 		for _, post := range posts {
-			err := utils.SendPostToOwner(ctx, &post)
+			err := utils.SendPostToOwner(bot, &post)
 			if err != nil {
 				logger.Error("Queue command", err)
 				return nil

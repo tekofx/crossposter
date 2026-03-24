@@ -44,7 +44,7 @@ func SendMessageToOwnerUsingBot(bot *telego.Bot, text string) *telego.Message {
 	return msg
 }
 
-func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
+func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 	if post.HasImages {
 		var media []telego.InputMedia
 		for _, image := range post.Images {
@@ -70,7 +70,7 @@ func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 			Media:  media,
 		}
 
-		_, err := ctx.Bot().SendMediaGroup(context.Background(), &mediaGroup)
+		_, err := bot.SendMediaGroup(context.Background(), &mediaGroup)
 		if err != nil {
 			return merrors.New(merrors.TelegramCannotSendMediaGroupErrorCode, err.Error())
 		}
@@ -85,7 +85,7 @@ func SendPostToOwner(ctx *th.Context, post *model.Post) *merrors.MError {
 
 	msg := tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), post.String())
 	msg.ReplyMarkup = keyboard
-	ctx.Bot().SendMessage(ctx, msg)
+	bot.SendMessage(context.Background(), msg)
 
 	return nil
 }

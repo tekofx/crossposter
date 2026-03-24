@@ -19,11 +19,20 @@ import (
 
 func onKeyboardPress(bh *th.BotHandler) {
 	delRegex, _ := regexp.Compile(`delete:\d+`)
+	editRegex, _ := regexp.Compile(`delete:\d+`)
+
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
-		ctx.Bot().SendMessage(ctx, tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), "Pulsaste Editar"))
-		ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+		if err := onEditPress(ctx, query); err != nil {
+			logger.Error(err)
+			if err.Code == merrors.NotFoundErrorCode {
+				utils.SendMessageToOwner(ctx, "Ese post no existe")
+			} else {
+				utils.SendMessageToOwner(ctx, fmt.Sprintf("Error al editar post: %s", err.Message))
+			}
+		}
 		return nil
-	}, th.CallbackDataEqual("edit"))
+	}, th.CallbackDataMatches(editRegex))
+
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
 		if err := onDeletePress(ctx, query); err != nil {
 			logger.Error(err)
@@ -49,6 +58,18 @@ func onDeletePress(ctx *th.Context, query telego.CallbackQuery) *merrors.MError 
 		return merr
 	}
 	ctx.Bot().SendMessage(ctx, tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), fmt.Sprintf("Eliminado post %d", postId)))
+	ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+	return nil
+}
+
+func onEditPress(ctx *th.Context, query telego.CallbackQuery) *merrors.MError {
+	// TODO: Implement
+	postId, err := strconv.Atoi(strings.Split(query.Data, ":")[1])
+	if err != nil {
+		ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+		return merrors.New(merrors.CannotConvertToIntErrorCode, err.Error())
+	}
+	ctx.Bot().SendMessage(ctx, tu.Message(tu.ID(int64(config.Conf.TelegramOwner)), fmt.Sprintf("Editado post %d", postId)))
 	ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
 	return nil
 }

@@ -60,6 +60,10 @@ func RemovePost(post *model.Post) *merrors.MError {
 }
 
 func RemovePostById(postId int) *merrors.MError {
+	if _, merr := GetPostById(postId); merr != nil {
+		return merr
+	}
+
 	err := Database.Delete(&model.Post{}, postId)
 	if err.Error != nil {
 		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -17,22 +16,22 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func downloadFile(downloadURL, saveAs string) error {
+func downloadFile(downloadURL, saveAs string) *merrors.MError {
 	resp, err := http.Get(downloadURL)
 	if err != nil {
-		return fmt.Errorf("failed to download file: %w", err)
+		return merrors.New(merrors.CannotDownloadFileErrorCode, err.Error())
 	}
 	defer resp.Body.Close()
 
 	out, err := os.Create(saveAs)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		return merrors.New(merrors.CannotCreateFileErrorCode, err.Error())
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to save file: %w", err)
+		return merrors.New(merrors.CannotSaveFileErrorCode, err.Error())
 	}
 	return nil
 }

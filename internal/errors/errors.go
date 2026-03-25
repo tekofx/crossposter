@@ -25,6 +25,9 @@ const (
 	CannotCreateRequestErrorCode        MErrorCode = 7
 	DoRequestErrorCode                  MErrorCode = 8
 	CannotConvertToIntErrorCode         MErrorCode = 9
+	CannotDownloadFileErrorCode         MErrorCode = 10
+	CannotCreateFileErrorCode           MErrorCode = 11
+	CannotSaveFileErrorCode             MErrorCode = 12
 
 	// 1000 -> 1999 | VALIDATION ERRORS
 	InvalidRequestErrorCode   MErrorCode = 1000

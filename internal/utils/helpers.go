@@ -95,10 +95,10 @@ func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 	return nil
 }
 
-func DownloadImage(bot *telego.Bot, fileId string) (*string, error) {
+func DownloadImage(bot *telego.Bot, fileId string) (*string, *merrors.MError) {
 	file, err := bot.GetFile(context.Background(), &telego.GetFileParams{FileID: fileId})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get file info: %w", err)
+		return nil, merrors.New(merrors.CannotReadFileErrorCode, err.Error())
 	}
 	extension := strings.Split(file.FilePath, ".")[1]
 	filename := fmt.Sprintf("./data/images/%s.%s", file.FileUniqueID, extension)

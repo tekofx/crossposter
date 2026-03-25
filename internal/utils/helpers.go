@@ -78,8 +78,13 @@ func SendPostToOwner(bot *telego.Bot, post *model.Post) *merrors.MError {
 
 	keyboard := tu.InlineKeyboard(
 		tu.InlineKeyboardRow(
-			tu.InlineKeyboardButton("Editar").WithCallbackData("edit"),
+			tu.InlineKeyboardButton("Editar").WithCallbackData(fmt.Sprintf("edit:%d", post.ID)),
 			tu.InlineKeyboardButton("Borrar").WithCallbackData(fmt.Sprintf("delete:%d", post.ID)),
+		),
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton("Publicar en Instagram").WithCallbackData(fmt.Sprintf("post_instagram:%d", post.ID)),
+			tu.InlineKeyboardButton("Publicar en Bluesky").WithCallbackData(fmt.Sprintf("post_bluesky:%d", post.ID)),
+			tu.InlineKeyboardButton("Publicar en Telegram").WithCallbackData(fmt.Sprintf("post_telegram:%d", post.ID)),
 		),
 	)
 

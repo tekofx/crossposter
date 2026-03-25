@@ -8,7 +8,9 @@ import (
 
 	"github.com/tekofx/crossposter/internal/config"
 	merrors "github.com/tekofx/crossposter/internal/errors"
+	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/services"
 )
 
 func PostToInstagram(post *model.Post) *merrors.MError {
@@ -30,9 +32,13 @@ const (
 )
 
 func uploadImage(post *model.Post) (*string, *merrors.MError) {
+	services.StartServer()
 	containerURL := fmt.Sprintf("%s/%s/media", instagramBaseURL, config.Conf.InstagramUserId)
+	imageUrl := fmt.Sprintf("%s/%s", config.Conf.FileServerUrl, post.Images[0].Filename)
+	imageUrl = "https://skyleriearts.tekofx.duckdns.org/AQADhgxrG3XFIFJ-.jpg"
+	logger.Log(imageUrl)
 	data := url.Values{}
-	data.Set("image_url", imageURL)
+	data.Set("image_url", imageUrl)
 	data.Set("caption", post.Text)
 	data.Set("access_token", config.Conf.InstagramAccessToken)
 
@@ -42,15 +48,23 @@ func uploadImage(post *model.Post) (*string, *merrors.MError) {
 	}
 	defer resp.Body.Close()
 
-	var containerResp map[string]string
+	var containerResp map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&containerResp); err != nil {
 		return nil, merrors.New(merrors.ParseJSONErrorCode, err.Error())
 	}
 
-	creationID, ok := containerResp["id"]
+	if errorObj, ok := containerResp["error"].(map[string]interface{}); ok {
+		if code, ok := errorObj["code"].(float64); ok && int(code) == 190 {
+			return nil, merrors.New(merrors.InstagramInvalidAccessTokenErrorCode, "Invalid Instagram Access Token")
+		}
+	}
+
+	creationID, ok := containerResp["id"].(string)
 	if !ok {
 		return nil, merrors.New(merrors.InstagramUploadImageErrorCode, "Failed uploading image to Instagram")
 	}
+
+	services.StopServer()
 
 	return &creationID, nil
 

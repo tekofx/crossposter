@@ -49,6 +49,7 @@ func onKeyboardPress(bh *th.BotHandler) {
 		return nil
 	}, th.CallbackDataMatches(delRegex))
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
+		logger.Log("Post Instagram Key Pressed")
 		if err := onPostToInstagramPress(ctx, query); err != nil {
 			logger.Error(err)
 			if err.Code == merrors.NotFoundErrorCode {
@@ -100,7 +101,10 @@ func onPostToInstagramPress(ctx *th.Context, query telego.CallbackQuery) *merror
 		return merr
 	}
 
-	instagram.PostToInstagram(post)
+	merr = instagram.PostToInstagram(post)
+	if merr != nil {
+		return merr
+	}
 	return nil
 
 }

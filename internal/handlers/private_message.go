@@ -44,23 +44,47 @@ func handleSingleMessage(bot *telego.Bot, msg telego.Message) {
 	}
 }
 
+func downloadPhotoAndUpdatePost(bot *telego.Bot, msg telego.Message, post *model.Post) *merrors.MError {
+	photoLen := len(msg.Photo)
+	file, err := utils.DownloadImage(bot, msg.Photo[photoLen-1].FileID)
+	if err != nil {
+		return err
+	}
+	post.Images = append(post.Images,
+		model.Image{
+			Filename: *file,
+			MimeType: "image/jpeg",
+			FileSize: msg.Photo[photoLen-1].FileSize,
+		},
+	)
+	post.HasImages = true
+	return nil
+}
+
+func processPhoto(bot *telego.Bot, msg telego.Message) *merrors.MError {
+	post := database.CreatePost()
+	err := downloadPhotoAndUpdatePost(bot, msg, post)
+	if err != nil {
+		return err
+	}
+	err = database.UpdatePost(post)
+	if err != nil {
+		return err
+	}
+	err = utils.SendPostToOwner(bot, post)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func processMediaGroup(bot *telego.Bot, msgs []telego.Message) *merrors.MError {
 	post := database.CreatePost()
 	for _, m := range msgs {
-		if m.Photo != nil {
-			photoLen := len(m.Photo)
-			file, err := utils.DownloadImage(bot, m.Photo[photoLen-1].FileID)
-			if err != nil {
-				return merrors.New(merrors.UnexpectedErrorCode, err.Error())
-			}
-			post.Images = append(post.Images,
-				model.Image{
-					Filename: *file,
-					MimeType: "image/jpeg",
-					FileSize: m.Photo[photoLen-1].FileSize,
-				},
-			)
-			post.HasImages = true
+		err := downloadPhotoAndUpdatePost(bot, m, post)
+		if err != nil {
+			return err
 		}
 	}
 	err := database.UpdatePost(post)
@@ -79,8 +103,14 @@ func onNewPrivateMessage(bh *th.BotHandler, bot *telego.Bot) {
 			utils.SendMessageToOwner(ctx, "Envía el archivo como imagen")
 			return nil
 		}
+
+		// If there's no media group
 		if update.Message.MediaGroupID == "" {
-			handleSingleMessage(bot, *update.Message)
+			if len(update.Message.Photo) == 0 {
+				handleSingleMessage(bot, *update.Message)
+			} else {
+				processPhoto(bot, *update.Message)
+			}
 			return nil
 		}
 		groupId := update.Message.MediaGroupID

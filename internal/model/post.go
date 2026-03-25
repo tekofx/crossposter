@@ -44,7 +44,7 @@ func (post *Post) String() string {
 		msg += fmt.Sprintf("%s\n", post.Text)
 	}
 
-	msg += fmt.Sprintf("ID: %d\nEstado: %s\n%s\n%s\n%s\n%s",
+	msg += fmt.Sprintf("ID: %d\nEstado: %s\n%s\n%s\n%s",
 		post.ID,
 		post.Status.String(),
 		format(post.PublishedOnBsky, "Bluesky", post.BskyLink),

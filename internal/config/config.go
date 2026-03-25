@@ -28,6 +28,10 @@ type Config struct {
 	InstagramUserId      string
 	InstagramAccessToken string
 	InstagramPostHour    int
+
+	// FileServer
+	FileServerUrl  string
+	FileServerPort int
 }
 
 var lock = &sync.Mutex{}
@@ -101,6 +105,10 @@ func GetConfig() *Config {
 		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID", false),
 		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN", false),
 		InstagramPostHour:    getIntEnvVariable("INSTAGRAM_POST_HOUR", false),
+
+		// FileServer
+		FileServerUrl:  getStringEnvVariable("FILE_SERVER_URL", false),
+		FileServerPort: getIntEnvVariable("FILE_SERVER_PORT", false),
 	}
 
 	if config.BskyHandle != "" && config.BskyAppPassword != "" {

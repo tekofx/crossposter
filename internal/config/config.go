@@ -24,10 +24,12 @@ type Config struct {
 	TelegramPostHour  int
 
 	// Instagram
-	InstagramEnabled     bool
-	InstagramUserId      string
-	InstagramAccessToken string
-	InstagramPostHour    int
+	InstagramEnabled          bool
+	InstagramUserId           string
+	InstagramClientId         int
+	InstagramClientSecret     string
+	InstagramLoginRedirectUrl string
+	InstagramPostHour         int
 
 	// FileServer
 	FileServerUrl  string
@@ -102,9 +104,11 @@ func GetConfig() *Config {
 		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR", false),
 
 		// Instagram
-		InstagramUserId:      getStringEnvVariable("INSTAGRAM_USER_ID", false),
-		InstagramAccessToken: getStringEnvVariable("INSTAGRAM_ACCESS_TOKEN", false),
-		InstagramPostHour:    getIntEnvVariable("INSTAGRAM_POST_HOUR", false),
+		InstagramUserId:           getStringEnvVariable("INSTAGRAM_USER_ID", false),
+		InstagramClientId:         getIntEnvVariable("INSTAGRAM_CLIENT_ID", false),
+		InstagramClientSecret:     getStringEnvVariable("INSTAGRAM_CLIENT_SECRET", false),
+		InstagramPostHour:         getIntEnvVariable("INSTAGRAM_POST_HOUR", false),
+		InstagramLoginRedirectUrl: getStringEnvVariable("INSTAGRAM_LOGIN_REDIRECT_URL", false),
 
 		// FileServer
 		FileServerUrl:  getStringEnvVariable("FILE_SERVER_URL", false),
@@ -119,7 +123,7 @@ func GetConfig() *Config {
 		config.TelegramEnabled = true
 	}
 
-	if config.InstagramAccessToken != "" && config.InstagramUserId != "" && config.InstagramPostHour != 0 {
+	if config.InstagramClientSecret != "" && config.InstagramUserId != "" && config.InstagramPostHour != 0 {
 		config.InstagramEnabled = true
 	}
 

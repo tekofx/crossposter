@@ -32,7 +32,7 @@ const (
 )
 
 func uploadImage(post *model.Post) (*string, *merrors.MError) {
-	services.StartServer()
+	services.StartFileServer()
 	containerURL := fmt.Sprintf("%s/%s/media", instagramBaseURL, config.Conf.InstagramUserId)
 	imageUrl := fmt.Sprintf("%s/%s", config.Conf.FileServerUrl, post.Images[0].Filename)
 	imageUrl = "https://skyleriearts.tekofx.duckdns.org/AQADhgxrG3XFIFJ-.jpg"
@@ -40,7 +40,7 @@ func uploadImage(post *model.Post) (*string, *merrors.MError) {
 	data := url.Values{}
 	data.Set("image_url", imageUrl)
 	data.Set("caption", post.Text)
-	data.Set("access_token", config.Conf.InstagramAccessToken)
+	data.Set("access_token", config.Conf.InstagramClientSecret)
 
 	resp, err := http.PostForm(containerURL, data)
 	if err != nil {
@@ -64,7 +64,7 @@ func uploadImage(post *model.Post) (*string, *merrors.MError) {
 		return nil, merrors.New(merrors.InstagramUploadImageErrorCode, "Failed uploading image to Instagram")
 	}
 
-	services.StopServer()
+	services.StopWebServer()
 
 	return &creationID, nil
 
@@ -75,7 +75,7 @@ func createPost(creationId string) *merrors.MError {
 	publishURL := fmt.Sprintf("%s/%s/media_publish", instagramBaseURL, config.Conf.InstagramUserId)
 	data = url.Values{}
 	data.Set("creation_id", creationId)
-	data.Set("access_token", config.Conf.InstagramAccessToken)
+	data.Set("access_token", config.Conf.InstagramClientSecret)
 
 	resp, err := http.PostForm(publishURL, data)
 	if err != nil {

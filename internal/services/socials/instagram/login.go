@@ -37,6 +37,10 @@ func GetLoginUrl() string {
 	return output
 }
 
+// Processes the code returned by Instagram API when an account authorizes the app
+// 1. Requests token from code
+// 2. With the token, requests a long-lived token and stores in db
+// 3. Creates a task to renew the long-lived token
 func processCode(code string) *merrors.MError {
 
 	token, merr := requestTokenFromCode(code)

@@ -32,9 +32,9 @@ type Config struct {
 	InstagramLoginRedirectUrl string
 	InstagramPostHour         int
 
-	// FileServer
-	FileServerUrl  string
-	FileServerPort int
+	// WebServer
+	WebServerUrl  string
+	WebServerPort int
 }
 
 var lock = &sync.Mutex{}
@@ -107,9 +107,9 @@ func GetConfig() *Config {
 		InstagramPostHour:         getIntEnvVariable("INSTAGRAM_POST_HOUR"),
 		InstagramLoginRedirectUrl: getStringEnvVariable("INSTAGRAM_LOGIN_REDIRECT_URL"),
 
-		// FileServer
-		FileServerUrl:  getStringEnvVariable("FILE_SERVER_URL"),
-		FileServerPort: getIntEnvVariable("FILE_SERVER_PORT"),
+		// WebServer
+		WebServerUrl:  getStringEnvVariable("WEB_SERVER_URL"),
+		WebServerPort: getIntEnvVariable("WEB_SERVER_PORT"),
 	}
 
 	if config.TelegramBotToken == "" {

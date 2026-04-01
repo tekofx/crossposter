@@ -34,7 +34,7 @@ const (
 func uploadImage(post *model.Post) (*string, *merrors.MError) {
 	services.StartFileServer()
 	containerURL := fmt.Sprintf("%s/%s/media", instagramBaseURL, config.Conf.InstagramUserId)
-	imageUrl := fmt.Sprintf("%s/%s", config.Conf.FileServerUrl, post.Images[0].Filename)
+	imageUrl := fmt.Sprintf("%s/%s", config.Conf.WebServerUrl, post.Images[0].Filename)
 	imageUrl = "https://skyleriearts.tekofx.duckdns.org/AQADhgxrG3XFIFJ-.jpg"
 	logger.Log(imageUrl)
 	data := url.Values{}

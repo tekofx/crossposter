@@ -16,7 +16,7 @@ func StartFileServer() {
 	fileserver = http.FileServer(http.Dir("./data/images"))
 	http.Handle("/", fileserver)
 	server = &http.Server{
-		Addr: fmt.Sprintf(":%d", config.Conf.FileServerPort),
+		Addr: fmt.Sprintf(":%d", config.Conf.WebServerPort),
 	}
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -29,7 +29,7 @@ func StartInstagramLoginServer() {
 	fileserver = http.FileServer(http.Dir("./data/images"))
 	http.Handle("/", fileserver)
 	server = &http.Server{
-		Addr: fmt.Sprintf(":%d", config.Conf.FileServerPort),
+		Addr: fmt.Sprintf(":%d", config.Conf.WebServerPort),
 	}
 
 	// Handle /login with query parameters

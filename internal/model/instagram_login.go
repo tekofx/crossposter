@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -8,5 +10,5 @@ type InstagramLogin struct {
 	gorm.Model
 	AccessToken string
 	TokenType   string
-	ExpiresIn   int
+	ExpireDate  time.Time `gorm:"type:DATETIME"`
 }

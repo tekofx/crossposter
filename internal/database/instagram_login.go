@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"time"
 
 	"github.com/tekofx/crossposter/internal/model"
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ func CreateInstagramLogin(accessToken string, tokenType string, expiresIn int) *
 	Database.Create(model.InstagramLogin{
 		AccessToken: accessToken,
 		TokenType:   tokenType,
-		ExpiresIn:   expiresIn,
+		ExpireDate:  time.Now().Add(time.Duration(expiresIn) * time.Second),
 	})
 	return &instagramLogin
 }

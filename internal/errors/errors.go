@@ -52,8 +52,9 @@ const (
 	TwitterServiceUnavailableErrorCode      MErrorCode = 2106
 
 	// 2200 -> 2299 | INSTAGRAM ERRORS
-	InstagramUploadImageErrorCode        MErrorCode = 2200
-	InstagramInvalidAccessTokenErrorCode MErrorCode = 2201
+	InstagramUploadImageErrorCode             MErrorCode = 2200
+	InstagramInvalidAccessTokenErrorCode      MErrorCode = 2201
+	InstagramInvalidGetTokenFromCodeErrorCode MErrorCode = 2202
 
 	// 2400 -> 2499 | TELEGRAM BOT ERRORS
 	TelegramCannotSendMessageToOwnerErrorCode   MErrorCode = 2400

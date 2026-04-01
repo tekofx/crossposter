@@ -27,7 +27,7 @@ type Config struct {
 	// Instagram
 	InstagramEnabled          bool
 	InstagramUserId           string
-	InstagramClientId         int
+	InstagramClientId         string
 	InstagramClientSecret     string
 	InstagramLoginRedirectUrl string
 	InstagramPostHour         int
@@ -102,7 +102,7 @@ func GetConfig() *Config {
 		// Instagram
 		InstagramEnabled:          strings.ToLower(getStringEnvVariable("INSTAGRAM_ENABLED")) == "true",
 		InstagramUserId:           getStringEnvVariable("INSTAGRAM_USER_ID"),
-		InstagramClientId:         getIntEnvVariable("INSTAGRAM_CLIENT_ID"),
+		InstagramClientId:         getStringEnvVariable("INSTAGRAM_CLIENT_ID"),
 		InstagramClientSecret:     getStringEnvVariable("INSTAGRAM_CLIENT_SECRET"),
 		InstagramPostHour:         getIntEnvVariable("INSTAGRAM_POST_HOUR"),
 		InstagramLoginRedirectUrl: getStringEnvVariable("INSTAGRAM_LOGIN_REDIRECT_URL"),
@@ -127,7 +127,7 @@ func GetConfig() *Config {
 	}
 
 	if config.InstagramEnabled {
-		if config.InstagramClientId == -1 || config.InstagramClientSecret == "" || config.InstagramLoginRedirectUrl == "" || config.InstagramPostHour == -1 || config.InstagramUserId == "" {
+		if config.InstagramClientId == "" || config.InstagramClientSecret == "" || config.InstagramLoginRedirectUrl == "" || config.InstagramPostHour == -1 || config.InstagramUserId == "" {
 			logger.Fatal("Instagram is enabled but instagram env vars are missing")
 		}
 

@@ -1,14 +1,25 @@
 package instagram
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 )
+
+type TokenData struct {
+	AccessToken string `json:"access_token"`
+	UserID      string `json:"user_id"`
+	Permissions string `json:"permissions"`
+}
+
+type Response struct {
+	Data []TokenData `json:"data"`
+}
 
 func GetLoginUrl() string {
 
@@ -21,19 +32,25 @@ func GetLoginUrl() string {
 
 }
 
-func GetTokenFromCode() {
+func GetTokenFromCode(code string) *merrors.MError {
 	resp, err := http.PostForm("https://api.instagram.com/oauth/access_token", url.Values{
-		"client_id":     {"990602627938098"},
-		"client_secret": {"a1b2C3D4"},
+		"client_id":     {config.Conf.InstagramClientId},
+		"client_secret": {config.Conf.InstagramClientSecret},
 		"grant_type":    {"authorization_code"},
-		"redirect_uri":  {"https://my.m.redirect.net/"},
-		"code":          {"AQBx-hBsH3..."},
+		"redirect_uri":  {config.Conf.InstagramLoginRedirectUrl},
+		"code":          {code},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return merrors.New(merrors.InstagramInvalidGetTokenFromCodeErrorCode, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return merrors.New(merrors.ParseJSONErrorCode, err.Error())
+	}
+
+	return nil
+
 }

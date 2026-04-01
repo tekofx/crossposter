@@ -7,6 +7,7 @@ import (
 
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/services/socials/instagram"
 )
 
 var fileserver http.Handler
@@ -39,6 +40,11 @@ func StartInstagramLoginServer() {
 		code := query.Get("code")
 
 		logger.Log("Webserver: Received", code)
+		err := instagram.GetTokenFromCode(code)
+		if err != nil {
+			logger.Error(err)
+		}
+
 	})
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

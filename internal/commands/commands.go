@@ -12,6 +12,8 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
+	"github.com/tekofx/crossposter/internal/services"
+	"github.com/tekofx/crossposter/internal/services/socials/instagram"
 	"github.com/tekofx/crossposter/internal/tasks"
 	"github.com/tekofx/crossposter/internal/types"
 	"github.com/tekofx/crossposter/internal/utils"
@@ -23,6 +25,7 @@ var commands = []telego.BotCommand{
 	{Command: "cola", Description: "Mostrar post esperando para ser publicado"},
 	{Command: "borrar", Description: "Elimina el post en cola"},
 	{Command: "cancelar", Description: "Cancela la programación de un post"},
+	{Command: "instagram_login", Description: "Inicia sesión con Instagram"},
 }
 
 func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
@@ -32,6 +35,7 @@ func AddCommands(bh *th.BotHandler, bot *telego.Bot) {
 	deletePostCommand(bh)
 	startCommand(bh)
 	cancelCommand(bh, bot)
+	instagramLoginCommand(bh)
 
 	var PrivateChatCommands = telego.SetMyCommandsParams{
 		Commands: commands,
@@ -181,4 +185,12 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		return nil
 	}, th.CommandEqual("post"))
+}
+func instagramLoginCommand(bh *th.BotHandler) {
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		utils.SendMessageToOwner(ctx, instagram.GetLoginUrl())
+		services.StartInstagramLoginServer()
+		return nil
+
+	}, th.CommandEqual("instagram_login"))
 }

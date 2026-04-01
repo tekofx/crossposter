@@ -10,7 +10,7 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 )
 
-func CreateLoginURL() string {
+func GetLoginUrl() string {
 
 	output := fmt.Sprintf(
 		"https://www.instagram.com/oauth/authorize?client_id=%d&redirect_uri=%s&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish",

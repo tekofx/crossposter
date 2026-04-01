@@ -177,10 +177,16 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 
 		utils.SendMessageToOwner(ctx, "Programando post...")
 
-		go tasks.SchedulePost(types.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
-		go tasks.SchedulePost(types.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
-		//go tasks.SchedulePost(types.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
-		go tasks.SchedulePost(types.Telegram, bot, post, 11, 55)
+		if config.Conf.BskyEnabled {
+			tasks.SchedulePost(types.Bluesky, bot, post, config.Conf.BskyPostHour, 0)
+		}
+		if config.Conf.InstagramEnabled {
+			tasks.SchedulePost(types.Instagram, bot, post, config.Conf.InstagramPostHour, 0)
+		}
+		if config.Conf.TelegramEnabled {
+			//tasks.SchedulePost(types.Telegram, bot, post, config.Conf.TelegramPostHour, 0)
+			tasks.SchedulePost(types.Telegram, bot, post, 11, 55)
+		}
 
 		return nil
 	}, th.CommandEqual("post"))

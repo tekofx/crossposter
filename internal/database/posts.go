@@ -5,6 +5,7 @@ import (
 
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/model"
+	"github.com/tekofx/crossposter/internal/types"
 	"gorm.io/gorm"
 )
 
@@ -69,6 +70,27 @@ func RemovePostById(postId int) *merrors.MError {
 		return merrors.New(merrors.RemovePostErrorCode, err.Error.Error())
 	}
 	return nil
+}
+
+func GetScheduledPosts() ([]model.Post, *merrors.MError) {
+
+	var posts []model.Post
+
+	err := Database.
+		Order("created_at DESC").
+		Preload("Images"). // Load associated images (optional)
+		Where("status=?", types.Scheduled).
+		Find(&posts).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return posts, nil // No posts in the database
+		}
+		return posts, merrors.New(merrors.DatabaseErrorCode, err.Error())
+	}
+
+	return posts, nil
+
 }
 
 func GetPostById(postId int) (*model.Post, *merrors.MError) {

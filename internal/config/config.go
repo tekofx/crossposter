@@ -117,16 +117,23 @@ func GetConfig() *Config {
 	}
 
 	if config.BskyEnabled && (config.BskyAppPassword == "" || config.BskyHandle == "" || config.BskyPostHour == -1) {
-		logger.Fatal("Missing Bsky env vars")
+		logger.Fatal("Bluesky is enabled but Bluesky env vars are missing")
+
 	}
 
 	if config.TelegramEnabled && (config.TelegramChannelId == -1 || config.TelegramOwner == -1 || config.TelegramPostHour == -1) {
-		logger.Fatal("Missing Telegram env vars")
+		logger.Fatal("Telegram is enabled but Telegram env vars are missing")
+
 	}
 
-	if config.InstagramEnabled &&
-		(config.InstagramClientId == -1 || config.InstagramClientSecret == "" || config.InstagramLoginRedirectUrl == "" || config.InstagramPostHour == -1 || config.InstagramUserId == "") {
-		logger.Fatal("Missing Instagram env vars")
+	if config.InstagramEnabled {
+		if config.InstagramClientId == -1 || config.InstagramClientSecret == "" || config.InstagramLoginRedirectUrl == "" || config.InstagramPostHour == -1 || config.InstagramUserId == "" {
+			logger.Fatal("Instagram is enabled but instagram env vars are missing")
+		}
+
+		if config.WebServerUrl == "" || config.WebServerPort == -1 {
+			logger.Fatal("Instagram is enabled but WebServer env vars are missing")
+		}
 	}
 
 	return &config

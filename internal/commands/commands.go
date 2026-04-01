@@ -12,7 +12,6 @@ import (
 	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/services"
 	"github.com/tekofx/crossposter/internal/services/socials/instagram"
 	"github.com/tekofx/crossposter/internal/tasks"
 	"github.com/tekofx/crossposter/internal/types"
@@ -189,7 +188,7 @@ func postCommand(bh *th.BotHandler, bot *telego.Bot) {
 func instagramLoginCommand(bh *th.BotHandler) {
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 		utils.SendMessageToOwner(ctx, instagram.GetLoginUrl())
-		services.StartInstagramLoginServer()
+		instagram.StartLoginServer()
 		return nil
 
 	}, th.CommandEqual("instagram_login"))

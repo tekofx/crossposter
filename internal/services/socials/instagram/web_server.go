@@ -1,19 +1,22 @@
-package services
+package instagram
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/tekofx/crossposter/internal/config"
+	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
-	"github.com/tekofx/crossposter/internal/services/socials/instagram"
 )
 
 var fileserver http.Handler
 var server *http.Server
 
-func StartFileServer() {
+func startFileServer() {
 	fileserver = http.FileServer(http.Dir("./data/images"))
 	http.Handle("/", fileserver)
 	server = &http.Server{
@@ -26,7 +29,7 @@ func StartFileServer() {
 	}()
 }
 
-func StartInstagramLoginServer() {
+func StartLoginServer() {
 	server = &http.Server{
 		Addr: fmt.Sprintf(":%d", config.Conf.WebServerPort),
 	}
@@ -38,10 +41,30 @@ func StartInstagramLoginServer() {
 		code := query.Get("code")
 
 		logger.Log("Webserver: Received", code)
-		err := instagram.GetTokenFromCode(code)
+
+		resp, err := http.PostForm("https://api.instagram.com/oauth/access_token", url.Values{
+			"client_id":     {config.Conf.InstagramClientId},
+			"client_secret": {config.Conf.InstagramClientSecret},
+			"grant_type":    {"authorization_code"},
+			"redirect_uri":  {config.Conf.InstagramLoginRedirectUrl},
+			"code":          {code},
+		})
 		if err != nil {
-			logger.Error(err)
+			logger.Error(merrors.New(merrors.InstagramInvalidGetTokenFromCodeErrorCode, err.Error()))
 		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		err = json.Unmarshal(body, &resp)
+		if err != nil {
+			logger.Error(merrors.New(merrors.ParseJSONErrorCode, err.Error()))
+		}
+
+		merr := processCode(code)
+		if merr != nil {
+			logger.Error(merr)
+		}
+		stopWebServer()
 
 	})
 	go func() {
@@ -51,7 +74,7 @@ func StartInstagramLoginServer() {
 	}()
 }
 
-func StopWebServer() {
+func stopWebServer() {
 	if err := server.Shutdown(context.Background()); err != nil {
 		logger.Fatal(err)
 	}

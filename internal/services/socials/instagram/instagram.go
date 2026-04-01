@@ -10,7 +10,6 @@ import (
 	merrors "github.com/tekofx/crossposter/internal/errors"
 	"github.com/tekofx/crossposter/internal/logger"
 	"github.com/tekofx/crossposter/internal/model"
-	"github.com/tekofx/crossposter/internal/services"
 )
 
 func PostToInstagram(post *model.Post) *merrors.MError {
@@ -32,7 +31,7 @@ const (
 )
 
 func uploadImage(post *model.Post) (*string, *merrors.MError) {
-	services.StartFileServer()
+	startFileServer()
 	containerURL := fmt.Sprintf("%s/%s/media", instagramBaseURL, config.Conf.InstagramUserId)
 	imageUrl := fmt.Sprintf("%s/%s", config.Conf.WebServerUrl, post.Images[0].Filename)
 	imageUrl = "https://skyleriearts.tekofx.duckdns.org/AQADhgxrG3XFIFJ-.jpg"
@@ -64,7 +63,7 @@ func uploadImage(post *model.Post) (*string, *merrors.MError) {
 		return nil, merrors.New(merrors.InstagramUploadImageErrorCode, "Failed uploading image to Instagram")
 	}
 
-	services.StopWebServer()
+	stopWebServer()
 
 	return &creationID, nil
 

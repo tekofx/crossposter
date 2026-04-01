@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -60,27 +61,19 @@ func Initialize() {
 	}
 }
 
-func getIntEnvVariable(name string, required bool) int {
+func getIntEnvVariable(name string) int {
 	envVar := os.Getenv(name)
-	if envVar == "" && required {
-		logger.Fatal("Env variable %s required", name)
-	}
 
 	intValue, err := strconv.Atoi(envVar)
 	if err != nil {
-		logger.Fatal("Env variable %s must be integer", name)
+		return -1
 	}
 
 	return intValue
 }
 
-func getStringEnvVariable(name string, required bool) string {
-	envVar := os.Getenv(name)
-	if envVar == "" && required {
-		logger.Fatal("Env variable %s required", name)
-	}
-
-	return envVar
+func getStringEnvVariable(name string) string {
+	return os.Getenv(name)
 }
 
 func GetConfig() *Config {
@@ -90,41 +83,50 @@ func GetConfig() *Config {
 	}
 
 	config := Config{
+
 		// Bluesky
-		BskyHandle:      getStringEnvVariable("BSKY_HANDLE", true),
-		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD", true),
-		BskyPostHour:    getIntEnvVariable("BSKY_POST_HOUR", true),
+		BskyEnabled:     strings.ToLower(getStringEnvVariable("BSKY_ENABLED")) == "true",
+		BskyHandle:      getStringEnvVariable("BSKY_HANDLE"),
+		BskyAppPassword: getStringEnvVariable("BSKY_APP_PASSWORD"),
+		BskyPostHour:    getIntEnvVariable("BSKY_POST_HOUR"),
 
 		// Telegram Bot
-		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN", false),
+		TelegramBotToken: getStringEnvVariable("TELEGRAM_BOT_TOKEN"),
 
 		// Telegram Channel
-		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID", false),
-		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER", false),
-		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR", false),
+		TelegramEnabled:   strings.ToLower(getStringEnvVariable("TELEGRAM_CHANNEL_ENABLED")) == "true",
+		TelegramChannelId: getIntEnvVariable("TELEGRAM_CHANNEL_ID"),
+		TelegramOwner:     getIntEnvVariable("TELEGRAM_OWNER"),
+		TelegramPostHour:  getIntEnvVariable("TELEGRAM_POST_HOUR"),
 
 		// Instagram
-		InstagramUserId:           getStringEnvVariable("INSTAGRAM_USER_ID", false),
-		InstagramClientId:         getIntEnvVariable("INSTAGRAM_CLIENT_ID", false),
-		InstagramClientSecret:     getStringEnvVariable("INSTAGRAM_CLIENT_SECRET", false),
-		InstagramPostHour:         getIntEnvVariable("INSTAGRAM_POST_HOUR", false),
-		InstagramLoginRedirectUrl: getStringEnvVariable("INSTAGRAM_LOGIN_REDIRECT_URL", false),
+		InstagramEnabled:          strings.ToLower(getStringEnvVariable("INSTAGRAM_ENABLED")) == "true",
+		InstagramUserId:           getStringEnvVariable("INSTAGRAM_USER_ID"),
+		InstagramClientId:         getIntEnvVariable("INSTAGRAM_CLIENT_ID"),
+		InstagramClientSecret:     getStringEnvVariable("INSTAGRAM_CLIENT_SECRET"),
+		InstagramPostHour:         getIntEnvVariable("INSTAGRAM_POST_HOUR"),
+		InstagramLoginRedirectUrl: getStringEnvVariable("INSTAGRAM_LOGIN_REDIRECT_URL"),
 
 		// FileServer
-		FileServerUrl:  getStringEnvVariable("FILE_SERVER_URL", false),
-		FileServerPort: getIntEnvVariable("FILE_SERVER_PORT", false),
+		FileServerUrl:  getStringEnvVariable("FILE_SERVER_URL"),
+		FileServerPort: getIntEnvVariable("FILE_SERVER_PORT"),
 	}
 
-	if config.BskyHandle != "" && config.BskyAppPassword != "" {
-		config.BskyEnabled = true
+	if config.TelegramBotToken == "" {
+		logger.Fatal("Missing Telegram Bot Token")
 	}
 
-	if config.TelegramBotToken != "" && config.TelegramChannelId != 0 && config.TelegramOwner != 0 {
-		config.TelegramEnabled = true
+	if config.BskyEnabled && (config.BskyAppPassword == "" || config.BskyHandle == "" || config.BskyPostHour == -1) {
+		logger.Fatal("Missing Bsky env vars")
 	}
 
-	if config.InstagramClientSecret != "" && config.InstagramUserId != "" && config.InstagramPostHour != 0 {
-		config.InstagramEnabled = true
+	if config.TelegramEnabled && (config.TelegramChannelId == -1 || config.TelegramOwner == -1 || config.TelegramPostHour == -1) {
+		logger.Fatal("Missing Telegram env vars")
+	}
+
+	if config.InstagramEnabled &&
+		(config.InstagramClientId == -1 || config.InstagramClientSecret == "" || config.InstagramLoginRedirectUrl == "" || config.InstagramPostHour == -1 || config.InstagramUserId == "") {
+		logger.Fatal("Missing Instagram env vars")
 	}
 
 	return &config

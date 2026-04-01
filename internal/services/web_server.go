@@ -27,8 +27,6 @@ func StartFileServer() {
 }
 
 func StartInstagramLoginServer() {
-	fileserver = http.FileServer(http.Dir("./data/images"))
-	http.Handle("/", fileserver)
 	server = &http.Server{
 		Addr: fmt.Sprintf(":%d", config.Conf.WebServerPort),
 	}

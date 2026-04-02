@@ -10,6 +10,7 @@ import (
 	"github.com/tekofx/crossposter/internal/config"
 	"github.com/tekofx/crossposter/internal/database"
 	merrors "github.com/tekofx/crossposter/internal/errors"
+	"github.com/tekofx/crossposter/internal/logger"
 )
 
 type TokenData struct {
@@ -29,12 +30,13 @@ type TokenResponse struct {
 }
 
 func GetLoginUrl() string {
-	output := fmt.Sprintf(
-		"https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish",
-		config.Conf.InstagramClientId,
-		config.Conf.InstagramLoginRedirectUrl,
-	)
-	return output
+	url := "https://www.instagram.com/oauth/authorize"
+	url += fmt.Sprintf("?redirect_uri=%s", config.Conf.InstagramLoginRedirectUrl)
+	url += fmt.Sprintf("&client_id=%s", config.Conf.InstagramClientId)
+	url += "&response_type=code"
+	url += "&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish"
+
+	return url
 }
 
 // Processes the code returned by Instagram API when an account authorizes the app
@@ -75,6 +77,8 @@ func requestTokenFromCode(code string) (*string, *merrors.MError) {
 	if err != nil {
 		return nil, merrors.New(merrors.ParseJSONErrorCode, err.Error())
 	}
+
+	logger.Log(body)
 
 	return &tokenResponse.Data[0].AccessToken, nil
 

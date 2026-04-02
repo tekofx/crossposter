@@ -22,14 +22,7 @@ var tasksManager *TasksManager
 
 func Initialize() {
 	tasksManager = newTasksManager()
-	scheduledPosts, merr := database.GetScheduledPosts()
-	if merr != nil {
-		logger.Error(merr)
-		return
-	}
-
-	for _, post := range scheduledPosts {
-	}
+	// TODO: Start post tasks
 }
 
 func StopTasksOfPost(postId int) {

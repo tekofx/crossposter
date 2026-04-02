@@ -58,6 +58,8 @@ func StartLoginServer() {
 		err = json.Unmarshal(body, &resp)
 		if err != nil {
 			logger.Error(merrors.New(merrors.ParseJSONErrorCode, err.Error()))
+			stopWebServer()
+			return
 		}
 
 		merr := processCode(code)
